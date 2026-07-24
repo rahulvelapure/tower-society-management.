@@ -120,6 +120,19 @@ Members are created only by an administrator — there is **no** public account 
 
 Admins cannot reach these routes (`ensureSuperAdmin`); no route anywhere can create a superadmin or modify one — the protected superadmin cannot be demoted/deactivated/deleted through the application.
 
+## `routes/finance.js` (Phase 3A-2 — Billing Configuration + Billing Periods)
+
+| Method | Route | Auth Required | Admin Required | Superadmin Required | Notes |
+|---|---|---|---|---|---|
+| GET | `/finance/config` | Yes | — | — (view) | Read-only for admin; superadmin also sees Edit |
+| GET/POST | `/finance/config/edit`, `POST /finance/config` | Yes | — | **Yes** | Master financial configuration |
+| GET/POST | `/finance/config/charges*` (new/edit/deactivate/reactivate) | Yes | — | **Yes** | Charge component master; rate changes append-only |
+| GET | `/finance/periods` , `/finance/periods/:id` | Yes | **Yes** | — | Operational, admin+superadmin |
+| POST | `/finance/periods` (create), `/finance/periods/:id` (edit, DRAFT only) | Yes | **Yes** | — | Overlap-checked, idempotent |
+| POST | `/finance/periods/:id/delete` | Yes | — | **Yes** | DRAFT + zero Bills only; destructive, restricted |
+
+Zero routes in this file create a `Bill`, `Payment`, `Receipt`, or `Adjustment` document — confirmed by code search (no `Bill.create`/`insertMany` call exists anywhere in the repository).
+
 ## `POST /webhooks/stripe` (Stripe signed webhook)
 
 | Property | Value |

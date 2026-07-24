@@ -1,0 +1,106 @@
+<%- include('partials/appHead', { pageTitle: period.name }) %>
+<%- include('partials/appNav', { active: 'periods', pageTitle: period.name }) %>
+
+<%
+  const isSuper = currentUser && (currentUser.role === 'superadmin' || (!currentUser.role && currentUser.isAdmin));
+  function statusBadge(s) {
+    if (s === 'DRAFT') return '<span class="badge badge-muted">Draft</span>';
+    if (s === 'GENERATED') return '<span class="badge badge-warning">Generated</span>';
+    if (s === 'ISSUED') return '<span class="badge badge-success">Issued</span>';
+    return '<span class="badge badge-muted">Closed</span>';
+  }
+%>
+
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Billing period · FY <%= fy %></div>
+    <h1 class="page-title" style="margin-top:4px;"><%= period.name %></h1>
+    <div class="sub"><%= period.periodStart.toLocaleDateString() %> – <%= period.periodEnd.toLocaleDateString() %> &nbsp; <%- statusBadge(period.status) %></div>
+  </div>
+  <a href="/finance/periods" class="btn btn-ghost">Back to periods</a>
+</div>
+
+<% if (typeof error !== 'undefined' && error) { %><div class="flash flash-error"><%= error %></div><% } %>
+
+<div class="grid cols-2">
+  <div class="card card-pad">
+    <div class="eyebrow">Dates</div>
+    <% if (period.status === 'DRAFT') { %>
+      <form action="/finance/periods/<%= period._id %>" method="POST" style="margin-top:14px;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="grid" style="grid-template-columns:1fr 1fr;">
+          <div class="form-field">
+            <label class="label" for="issueDate">Issue date</label>
+            <input class="input" type="date" name="issueDate" id="issueDate" value="<%= period.issueDate ? period.issueDate.toISOString().slice(0,10) : '' %>" required>
+          </div>
+          <div class="form-field">
+            <label class="label" for="dueDate">Due date</label>
+            <input class="input" type="date" name="dueDate" id="dueDate" value="<%= period.dueDate ? period.dueDate.toISOString().slice(0,10) : '' %>" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-ghost btn-sm">Save dates</button>
+      </form>
+    <% } else { %>
+      <dl class="def-list" style="margin-top:14px;">
+        <dt>Issue date</dt><dd><%= period.issueDate ? period.issueDate.toLocaleDateString() : '—' %></dd>
+        <dt>Due date</dt><dd><%= period.dueDate ? period.dueDate.toLocaleDateString() : '—' %></dd>
+      </dl>
+    <% } %>
+
+    <% if (period.status === 'DRAFT' && isSuper) { %>
+      <hr class="divider">
+      <form action="/finance/periods/<%= period._id %>/delete" method="POST" onsubmit="return confirm('Delete this draft period? This cannot be undone.');">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-danger btn-sm">Delete draft period</button>
+      </form>
+    <% } %>
+  </div>
+
+  <div class="card card-pad">
+    <div class="eyebrow">Generation</div>
+    <p class="text-muted" style="margin-top:10px; font-size:14px;">
+      Bill preview, generation, review and issuing arrive in Phase 3A-3, after this configuration is validated.
+    </p>
+    <button class="btn btn-ghost btn-block" disabled title="Available in Phase 3A-3" style="margin-top:8px;">Generate Bills (Phase 3A-3)</button>
+    <div class="caption" style="margin-top:8px;"><%= billCount %> bill(s) exist for this period.</div>
+  </div>
+</div>
+
+<div class="card mt-6">
+  <div class="card-head"><h3>Estimate preview</h3><span class="caption">Not saved anywhere — recalculated live</span></div>
+  <div class="card-pad">
+    <p class="caption" style="margin-top:-6px; margin-bottom:14px;"><%= preview.unitCount %> residential flats.</p>
+    <% if (!preview.lines.length) { %>
+      <p class="text-muted" style="margin:0;">No charge components are configured yet. <a href="/finance/config">Set up billing configuration</a>.</p>
+    <% } else { %>
+      <div class="table-wrap" style="border:none; border-radius:0; margin-bottom:14px;">
+        <table class="table">
+          <thead><tr><th>Component</th><th>Method</th><th class="num">Per flat</th><th class="num">Included in estimate?</th></tr></thead>
+          <tbody>
+            <% preview.lines.forEach(l => { %>
+              <tr>
+                <td class="cell-strong"><%= l.name %> <span class="caption">(<%= l.code %>)</span></td>
+                <td><span class="badge badge-muted"><%= l.calculationMethod.replace(/_/g,' ') %></span></td>
+                <td class="num mono"><%= l.perUnitFormatted || '—' %></td>
+                <td class="num">
+                  <% if (l.calculable && l.hasRate) { %><span class="badge badge-success">Yes</span>
+                  <% } else if (!l.calculable) { %><span class="badge badge-muted">Not auto-calculable</span>
+                  <% } else { %><span class="badge badge-warning">No rate set</span><% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <div class="row-between" style="padding:14px 4px 0; border-top:1px solid var(--border);">
+        <span class="section-title">Estimated total (<%= preview.unitCount %> flats)</span>
+        <span class="kpi-value mono" style="font-size:22px;">₹<%= (preview.totalPaise/100).toLocaleString('en-IN') %></span>
+      </div>
+      <% if (preview.excludedLines.length) { %>
+        <p class="caption" style="margin-top:10px;">Excludes <%= preview.excludedLines.length %> component(s) without an auto-calculable rate yet.</p>
+      <% } %>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/appFoot') %>

@@ -89,6 +89,7 @@ app.use(require('./routes/members'));
 app.use(require('./routes/admins'));
 app.use(require('./routes/notice'));
 app.use(require('./routes/bill'));
+app.use(require('./routes/finance'));
 app.use(require('./routes/helpdesk'));
 app.use(require('./routes/contacts'));
 app.use(require('./routes/units'));

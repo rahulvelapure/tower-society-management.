@@ -1,0 +1,123 @@
+<%- include('partials/appHead', { pageTitle: 'Billing Configuration' }) %>
+<%- include('partials/appNav', { active: 'config', pageTitle: 'Billing Configuration' }) %>
+
+<%
+  const isSuper = currentUser && (currentUser.role === 'superadmin' || (!currentUser.role && currentUser.isAdmin));
+  function policyBadge(v) {
+    if (!v || v === 'NOT_DECIDED' || v === 'NOT_CONFIGURED' || v === 'NONE') return '<span class="badge badge-muted">Not configured</span>';
+    return '<span class="badge badge-success">' + v.replace(/_/g, ' ') + '</span>';
+  }
+%>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Billing Configuration</h1>
+    <div class="sub"><%= society.societyName %> · Phase 3 financial foundation</div>
+  </div>
+  <% if (isSuper) { %>
+    <a href="/finance/config/edit" class="btn btn-primary">Edit settings</a>
+  <% } %>
+</div>
+
+<% if (!isSuper) { %>
+  <div class="flash flash-info">You have view-only access. Only the superadmin can change billing configuration.</div>
+<% } %>
+
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-head"><h3>Settings</h3><%= config ? policyBadge('ACTIVE') : policyBadge(null) %></div>
+  <div class="card-pad">
+    <% if (!config) { %>
+      <p class="text-muted" style="margin:0;">No billing configuration exists yet.<% if (isSuper) { %> <a href="/finance/config/edit">Set it up</a>.<% } %></p>
+    <% } else { %>
+      <dl class="def-list">
+        <dt>Financial year</dt><dd>April – March (India)</dd>
+        <dt>Billing frequency</dt><dd><%= config.billingFrequency %></dd>
+        <dt>Default issue day</dt><dd>Day <%= config.defaultIssueDay %> of the month</dd>
+        <dt>Default due day</dt><dd>Day <%= config.defaultDueDay %> of the month</dd>
+        <dt>Grace period</dt><dd><%= config.gracePeriodDays %> day(s)</dd>
+        <dt>Bill numbering</dt><dd class="mono"><%= config.billNumberPrefix %>/2026-27/000123 <span class="text-muted" style="font-weight:400;">(example — not yet issued)</span></dd>
+        <dt>Receipt numbering</dt><dd class="mono"><%= config.receiptNumberPrefix %>/2026-27/000123 <span class="text-muted" style="font-weight:400;">(example — not yet issued)</span></dd>
+        <dt>Late fee</dt><dd><%- policyBadge(config.lateFeePolicy.type) %> <span class="caption">— inert, no formula runs yet</span></dd>
+        <dt>Partial payments</dt><dd><%- policyBadge(config.partialPaymentPolicy) %></dd>
+        <dt>Payment allocation</dt><dd><%- policyBadge(config.allocationPolicy) %></dd>
+        <dt>Tax / GST</dt><dd><%- policyBadge(config.taxApplicability) %></dd>
+      </dl>
+    <% } %>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-head">
+    <h3>Charge components</h3>
+    <% if (isSuper) { %><a href="/finance/config/charges/new" class="btn btn-ghost btn-sm">+ Add component</a><% } %>
+  </div>
+  <% if (!components.length) { %>
+    <div class="empty-state">
+      <div class="section-title">No charge components yet</div>
+      <p class="text-muted">Charge heads (maintenance, sinking fund, etc.) will appear here once configured. Nothing is billed until they exist.</p>
+    </div>
+  <% } else { %>
+    <div class="table-wrap" style="border:none; border-radius:0;">
+      <table class="table">
+        <thead><tr><th>Code</th><th>Name</th><th>Method</th><th>Current rate</th><th>Status</th><% if (isSuper) { %><th>Actions</th><% } %></tr></thead>
+        <tbody>
+          <% components.forEach(c => { %>
+            <% const rate = currentRate(c); %>
+            <tr>
+              <td class="mono cell-strong"><%= c.code %></td>
+              <td><%= c.name %></td>
+              <td><span class="badge badge-muted"><%= c.calculationMethod.replace(/_/g,' ') %></span></td>
+              <td class="mono">
+                <% if (c.calculationMethod !== 'FIXED_PER_UNIT') { %>
+                  <span class="text-faint">not auto-calculated yet</span>
+                <% } else if (rate) { %>
+                  ₹<%= (rate.amountPaise/100).toLocaleString('en-IN') %> / flat
+                <% } else { %>
+                  <span class="text-faint">no rate set</span>
+                <% } %>
+              </td>
+              <td><% if (c.active) { %><span class="badge badge-success">Active</span><% } else { %><span class="badge badge-danger">Inactive</span><% } %></td>
+              <% if (isSuper) { %>
+                <td>
+                  <div class="flex gap-2 wrap">
+                    <a class="btn btn-ghost btn-sm" href="/finance/config/charges/<%= c._id %>/edit">Edit</a>
+                    <% if (c.active) { %>
+                      <form action="/finance/config/charges/<%= c._id %>/deactivate" method="POST" style="display:inline;" onsubmit="return confirm('Deactivate this charge component? It will be excluded from future billing until reactivated.');">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="btn btn-danger btn-sm" type="submit">Deactivate</button>
+                      </form>
+                    <% } else { %>
+                      <form action="/finance/config/charges/<%= c._id %>/reactivate" method="POST" style="display:inline;">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="btn btn-ghost btn-sm" type="submit">Reactivate</button>
+                      </form>
+                    <% } %>
+                  </div>
+                </td>
+              <% } %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<div class="card card-pad" style="border-color:var(--border-strong);">
+  <div class="eyebrow">Legacy configuration — reference only, not active</div>
+  <p class="caption" style="margin-top:6px;">
+    These are the pre-Phase-3 maintenance charges still used by the existing Bill page and dues calculation.
+    They are <strong>not</strong> part of the new billing configuration above and have not been migrated —
+    shown here only so nothing looks hidden.
+  </p>
+  <dl class="def-list" style="margin-top:12px;">
+    <dt>Society charges</dt><dd>₹<%= legacyBill.societyCharges %></dd>
+    <dt>Repairs &amp; maintenance</dt><dd>₹<%= legacyBill.repairsAndMaintenance %></dd>
+    <dt>Sinking fund</dt><dd>₹<%= legacyBill.sinkingFund %></dd>
+    <dt>Water charges</dt><dd>₹<%= legacyBill.waterCharges %></dd>
+    <dt>Insurance charges</dt><dd>₹<%= legacyBill.insuranceCharges %></dd>
+    <dt>Parking charges</dt><dd>₹<%= legacyBill.parkingCharges %></dd>
+  </dl>
+</div>
+
+<%- include('partials/appFoot') %>

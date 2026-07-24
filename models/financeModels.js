@@ -122,6 +122,68 @@ const adjustmentSchema = new Schema({
 adjustmentSchema.index({ unit: 1, createdAt: 1 });
 
 // ---------------------------------------------------------------------------
+// BillingConfig - Phase 3A-2. ONE document per society (singleton, enforced by
+// the unique index below) holding the settings future Bill generation will
+// read. Changing these settings never rewrites history: each BillingPeriod
+// snapshots its own issueDate/dueDate at creation time, so an edit here only
+// affects periods created AFTER the change.
+// ---------------------------------------------------------------------------
+const billingConfigSchema = new Schema({
+    society: { type: ObjectId, ref: 'society', required: true },
+    financialYearStartMonth: { type: Number, default: 4, min: 1, max: 12 }, // 4 = April (Indian FY); informational
+    billingFrequency: { type: String, enum: ['MONTHLY', 'QUARTERLY'], default: 'MONTHLY' },
+    // Day-of-month only (1-28) - deliberately capped below 29 so every default
+    // is valid in every month, sidestepping Feb/30-day edge cases entirely.
+    defaultIssueDay: { type: Number, required: true, min: 1, max: 28 },
+    defaultDueDay: { type: Number, required: true, min: 1, max: 28 },
+    gracePeriodDays: { type: Number, default: 0, min: 0 },
+    currency: { type: String, default: 'INR' },
+    billNumberPrefix: { type: String, default: '27E', trim: true },
+    receiptNumberPrefix: { type: String, default: 'REC', trim: true },
+    // Reserved placeholders - inert until explicit business rules are approved
+    // and implemented (see PHASE_3_BILLING_ARCHITECTURE.md §18/§14).
+    lateFeePolicy: {
+        type: { type: String, enum: ['NONE', 'FIXED', 'PERCENTAGE'], default: 'NONE' },
+        value: { type: Number, default: 0 }
+    },
+    partialPaymentPolicy: { type: String, enum: ['NOT_DECIDED', 'ALLOW', 'DISALLOW'], default: 'NOT_DECIDED' },
+    allocationPolicy: { type: String, enum: ['NOT_DECIDED', 'OLDEST_DUE_FIRST', 'MANUAL_SELECTION', 'HYBRID'], default: 'NOT_DECIDED' },
+    taxApplicability: { type: String, enum: ['NOT_CONFIGURED'], default: 'NOT_CONFIGURED' },
+    updatedBy: { type: ObjectId, ref: 'User' }
+}, { timestamps: true });
+billingConfigSchema.index({ society: 1 }, { unique: true }); // singleton per society
+
+// ---------------------------------------------------------------------------
+// ChargeComponent - Phase 3A-2 master list of maintenance charge heads.
+// Amount changes are APPEND-ONLY (rateHistory) so a rate change never rewrites
+// a value that may already be referenced by a historical Bill snapshot.
+// ---------------------------------------------------------------------------
+const chargeComponentSchema = new Schema({
+    society: { type: ObjectId, ref: 'society', required: true },
+    code: { type: String, required: true, trim: true, uppercase: true }, // e.g. "MAINT", "SINK_FUND"
+    name: { type: String, required: true, trim: true },
+    description: String,
+    active: { type: Boolean, default: true },
+    calculationMethod: {
+        type: String,
+        enum: ['FIXED_PER_UNIT', 'PER_SQFT', 'UNIT_SPECIFIC', 'MANUAL'],
+        required: true
+    },
+    // Append-only. "Current rate" = the entry with the latest effectiveFrom
+    // that is <= now (see lib/financeConfig.js#currentRate). Never edited or
+    // removed - a rate change adds a new entry instead.
+    rateHistory: [{
+        amountPaise: { ...requiredPaise },
+        effectiveFrom: { type: Date, required: true },
+        setBy: { type: ObjectId, ref: 'User' },
+        setAt: { type: Date, default: Date.now }
+    }],
+    displayOrder: { type: Number, default: 0 },
+    createdBy: { type: ObjectId, ref: 'User' }
+}, { timestamps: true });
+chargeComponentSchema.index({ society: 1, code: 1 }, { unique: true }); // no duplicate charge codes
+
+// ---------------------------------------------------------------------------
 // Counter - atomic numbering ($inc upsert). _id e.g. "bill:2026-27".
 // ---------------------------------------------------------------------------
 const counterSchema = new Schema({
@@ -158,7 +220,11 @@ const auditLogSchema = new Schema({
             // finance (used from 3A-2 onward; enum reserved now)
             'PERIOD_CREATED', 'BILL_GENERATED', 'BILL_ISSUED', 'BILL_VOIDED',
             'PAYMENT_RECORDED', 'PAYMENT_VERIFIED', 'PAYMENT_REFUNDED',
-            'ADJUSTMENT_CREATED', 'RECEIPT_GENERATED', 'BILLING_CONFIG_CHANGED'
+            'ADJUSTMENT_CREATED', 'RECEIPT_GENERATED',
+            // billing configuration (3A-2)
+            'BILLING_CONFIG_CREATED', 'BILLING_CONFIG_UPDATED',
+            'CHARGE_COMPONENT_CREATED', 'CHARGE_COMPONENT_UPDATED', 'CHARGE_COMPONENT_DEACTIVATED',
+            'BILLING_PERIOD_CREATED', 'BILLING_PERIOD_UPDATED', 'BILLING_PERIOD_STATUS_CHANGED'
         ]
     },
     entityType: String,
@@ -169,6 +235,8 @@ auditLogSchema.index({ createdAt: -1 });
 auditLogSchema.index({ action: 1, createdAt: -1 });
 
 module.exports = {
+    BillingConfig: mongoose.model('billingconfig', billingConfigSchema),
+    ChargeComponent: mongoose.model('chargecomponent', chargeComponentSchema),
     BillingPeriod: mongoose.model('billingperiod', billingPeriodSchema),
     Bill: mongoose.model('bill', billSchema),
     Payment: mongoose.model('payment', paymentSchema),

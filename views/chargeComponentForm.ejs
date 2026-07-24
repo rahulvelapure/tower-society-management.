@@ -1,0 +1,99 @@
+<%- include('partials/appHead', { pageTitle: component ? 'Edit charge component' : 'Add charge component' }) %>
+<%- include('partials/appNav', { active: 'config', pageTitle: component ? 'Edit Charge Component' : 'Add Charge Component' }) %>
+
+<%
+  const val = (k) => (component && component[k] != null) ? component[k] : '';
+  const isEdit = component && component._id;
+%>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title"><%= isEdit ? 'Edit charge component' : 'Add charge component' %></h1>
+    <div class="sub">Superadmin-only. Rate changes never overwrite history — a new rate is added alongside the old one.</div>
+  </div>
+  <a href="/finance/config" class="btn btn-ghost">Back</a>
+</div>
+
+<% if (error) { %><div class="flash flash-error" style="max-width:640px;"><%= error %></div><% } %>
+
+<div class="card card-pad" style="max-width:640px;">
+  <form action="<%= isEdit ? '/finance/config/charges/' + component._id : '/finance/config/charges' %>" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-field">
+        <label class="label" for="code">Code <span class="req">*</span></label>
+        <input class="input mono" name="code" id="code" value="<%= val('code') %>" placeholder="MAINT" <%= isEdit ? 'readonly' : 'required' %> style="text-transform:uppercase;">
+        <% if (isEdit) { %><div class="field-hint">Code can't be changed after creation.</div><% } %>
+      </div>
+      <div class="form-field">
+        <label class="label" for="name">Name <span class="req">*</span></label>
+        <input class="input" name="name" id="name" value="<%= val('name') %>" placeholder="Maintenance Charges" required>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="label" for="description">Description</label>
+      <textarea class="input" name="description" id="description" rows="2"><%= val('description') %></textarea>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-field">
+        <label class="label" for="calculationMethod">Calculation method <span class="req">*</span></label>
+        <select class="input" name="calculationMethod" id="calculationMethod" required>
+          <% [['FIXED_PER_UNIT','Fixed per unit'],['PER_SQFT','Per sqft (not available yet)'],['UNIT_SPECIFIC','Unit-specific (manual per flat)'],['MANUAL','Manual']].forEach(([v,l]) => { %>
+            <option value="<%= v %>" <%= val('calculationMethod') === v ? 'selected' : '' %>><%= l %></option>
+          <% }) %>
+        </select>
+        <div class="field-hint">Only "Fixed per unit" contributes to the automatic billing preview right now — flat area data isn't reliable for every unit yet, and unit-specific/manual amounts need per-flat input that doesn't exist until bill generation.</div>
+      </div>
+      <div class="form-field">
+        <label class="label" for="displayOrder">Display order</label>
+        <input class="input" type="number" name="displayOrder" id="displayOrder" value="<%= val('displayOrder') || 0 %>">
+      </div>
+    </div>
+
+    <% if (!isEdit) { %>
+      <div class="fieldset-title">Initial rate (optional)</div>
+      <div class="form-field">
+        <label class="label" for="initialAmount">Amount (₹)</label>
+        <input class="input" type="number" step="0.01" min="0" name="initialAmount" id="initialAmount" placeholder="e.g. 2000.00">
+        <div class="field-hint">Effective immediately. Leave blank to configure the rate later.</div>
+      </div>
+    <% } else { %>
+      <div class="fieldset-title">Rate history</div>
+      <% if (component.rateHistory && component.rateHistory.length) { %>
+        <div class="table-wrap" style="margin-bottom:16px;">
+          <table class="table">
+            <thead><tr><th>Effective from</th><th class="num">Amount</th></tr></thead>
+            <tbody>
+              <% component.rateHistory.slice().sort((a,b) => new Date(b.effectiveFrom) - new Date(a.effectiveFrom)).forEach(r => { %>
+                <tr>
+                  <td><%= new Date(r.effectiveFrom).toLocaleDateString() %><% if (currentRate && currentRate.effectiveFrom && new Date(currentRate.effectiveFrom).getTime() === new Date(r.effectiveFrom).getTime() && currentRate.amountPaise === r.amountPaise) { %> <span class="badge badge-success" style="margin-left:6px;">Current</span><% } %></td>
+                  <td class="num mono">₹<%= (r.amountPaise/100).toLocaleString('en-IN') %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <p class="text-muted" style="margin-bottom:16px;">No rate has been set yet.</p>
+      <% } %>
+      <div class="grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-field">
+          <label class="label" for="newAmount">Add new rate (₹)</label>
+          <input class="input" type="number" step="0.01" min="0" name="newAmount" id="newAmount" placeholder="Leave blank to keep current rate">
+        </div>
+        <div class="form-field">
+          <label class="label" for="effectiveFrom">Effective from</label>
+          <input class="input" type="date" name="effectiveFrom" id="effectiveFrom">
+        </div>
+      </div>
+    <% } %>
+
+    <div class="flex gap-3 mt-4">
+      <button type="submit" class="btn btn-primary"><%= isEdit ? 'Save changes' : 'Create component' %></button>
+      <a href="/finance/config" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/appFoot') %>

@@ -1,0 +1,49 @@
+<%- include('partials/appHead', { pageTitle: 'Create billing period' }) %>
+<%- include('partials/appNav', { active: 'periods', pageTitle: 'Create Billing Period' }) %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Create billing period</h1>
+    <div class="sub">This creates a DRAFT period only — no bills are generated.</div>
+  </div>
+  <a href="/finance/periods" class="btn btn-ghost">Cancel</a>
+</div>
+
+<% if (!config) { %>
+  <div class="flash flash-info" style="max-width:560px;">No billing configuration exists yet — issue/due dates will default to the 1st and 15th of the month. <a href="/finance/config/edit">Set up configuration</a> first if you'd like different defaults.</div>
+<% } %>
+<% if (error) { %><div class="flash flash-error" style="max-width:560px;"><%= error %></div><% } %>
+
+<div class="card card-pad" style="max-width:560px;">
+  <form action="/finance/periods" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-field">
+      <label class="label" for="month">Month <span class="req">*</span></label>
+      <input class="input" type="month" name="month" id="month" value="<%= values.month || '' %>" required autofocus>
+      <div class="field-hint">Period start/end are computed as the full calendar month.</div>
+    </div>
+    <div class="form-field">
+      <label class="label" for="name">Period name</label>
+      <input class="input" name="name" id="name" value="<%= values.name || '' %>" placeholder="Defaults to e.g. \"July 2026\"">
+    </div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-field">
+        <label class="label" for="issueDate">Issue date</label>
+        <input class="input" type="date" name="issueDate" id="issueDate" value="<%= values.issueDate || '' %>">
+        <div class="field-hint">Defaults from configuration if left blank.</div>
+      </div>
+      <div class="form-field">
+        <label class="label" for="dueDate">Due date</label>
+        <input class="input" type="date" name="dueDate" id="dueDate" value="<%= values.dueDate || '' %>">
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-4">
+      <button type="submit" class="btn btn-primary">Create period</button>
+      <a href="/finance/periods" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/appFoot') %>

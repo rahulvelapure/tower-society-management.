@@ -1,0 +1,99 @@
+<%- include('partials/appHead', { pageTitle: 'Billing Configuration' }) %>
+<%- include('partials/appNav', { active: 'config', pageTitle: 'Edit Billing Configuration' }) %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Edit billing configuration</h1>
+    <div class="sub">Superadmin-only. Changes apply to periods created after saving — issued periods keep their own dates.</div>
+  </div>
+  <a href="/finance/config" class="btn btn-ghost">Cancel</a>
+</div>
+
+<% if (error) { %><div class="flash flash-error" style="max-width:640px;"><%= error %></div><% } %>
+
+<div class="card card-pad" style="max-width:640px;">
+  <form action="/finance/config" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="fieldset-title">Schedule</div>
+    <div class="form-field">
+      <label class="label">Financial year</label>
+      <input class="input" value="April – March (India)" disabled>
+      <div class="field-hint">Fixed for this deployment.</div>
+    </div>
+    <div class="form-field">
+      <label class="label" for="billingFrequency">Billing frequency <span class="req">*</span></label>
+      <select class="input" name="billingFrequency" id="billingFrequency" required>
+        <% ['MONTHLY','QUARTERLY'].forEach(f => { %>
+          <option value="<%= f %>" <%= config && config.billingFrequency === f ? 'selected' : '' %>><%= f %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-field">
+        <label class="label" for="defaultIssueDay">Default issue day (1–28) <span class="req">*</span></label>
+        <input class="input" type="number" min="1" max="28" name="defaultIssueDay" id="defaultIssueDay" value="<%= config ? config.defaultIssueDay : 1 %>" required>
+      </div>
+      <div class="form-field">
+        <label class="label" for="defaultDueDay">Default due day (1–28) <span class="req">*</span></label>
+        <input class="input" type="number" min="1" max="28" name="defaultDueDay" id="defaultDueDay" value="<%= config ? config.defaultDueDay : 15 %>" required>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="label" for="gracePeriodDays">Grace period (days)</label>
+      <input class="input" type="number" min="0" name="gracePeriodDays" id="gracePeriodDays" value="<%= config ? config.gracePeriodDays : 0 %>">
+    </div>
+
+    <div class="fieldset-title">Numbering</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-field">
+        <label class="label" for="billNumberPrefix">Bill number prefix <span class="req">*</span></label>
+        <input class="input" name="billNumberPrefix" id="billNumberPrefix" value="<%= config ? config.billNumberPrefix : '27E' %>" required>
+      </div>
+      <div class="form-field">
+        <label class="label" for="receiptNumberPrefix">Receipt number prefix <span class="req">*</span></label>
+        <input class="input" name="receiptNumberPrefix" id="receiptNumberPrefix" value="<%= config ? config.receiptNumberPrefix : 'REC' %>" required>
+      </div>
+    </div>
+    <div class="field-hint" style="margin-bottom:16px;">Numbers are not issued until Phase 3A-3/3A-7 — this only sets the prefix format.</div>
+
+    <div class="fieldset-title">Policies (reserved — inert until approved)</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-field">
+        <label class="label" for="lateFeeType">Late fee</label>
+        <select class="input" name="lateFeeType" id="lateFeeType">
+          <% ['NONE','FIXED','PERCENTAGE'].forEach(t => { %>
+            <option value="<%= t %>" <%= config && config.lateFeePolicy.type === t ? 'selected' : '' %>><%= t %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="label" for="lateFeeValue">Late fee value</label>
+        <input class="input" type="number" step="0.01" min="0" name="lateFeeValue" id="lateFeeValue" value="<%= config ? config.lateFeePolicy.value : 0 %>">
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="label" for="partialPaymentPolicy">Partial payments</label>
+      <select class="input" name="partialPaymentPolicy" id="partialPaymentPolicy">
+        <% ['NOT_DECIDED','ALLOW','DISALLOW'].forEach(p => { %>
+          <option value="<%= p %>" <%= config && config.partialPaymentPolicy === p ? 'selected' : '' %>><%= p.replace(/_/g,' ') %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="form-field">
+      <label class="label" for="allocationPolicy">Payment allocation</label>
+      <select class="input" name="allocationPolicy" id="allocationPolicy">
+        <% ['NOT_DECIDED','OLDEST_DUE_FIRST','MANUAL_SELECTION','HYBRID'].forEach(p => { %>
+          <option value="<%= p %>" <%= config && config.allocationPolicy === p ? 'selected' : '' %>><%= p.replace(/_/g,' ') %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="flex gap-3 mt-4">
+      <button type="submit" class="btn btn-primary">Save configuration</button>
+      <a href="/finance/config" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/appFoot') %>
