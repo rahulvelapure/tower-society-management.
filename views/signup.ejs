@@ -9,6 +9,7 @@
             <div class="card-body">
               <h5 class="card-title text-center">Sign-up</h5>
               <form class="form-signin" action="/signup" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="form-label-group">
                   <input name="firstName" type="text" id="inputFirstName" class="form-control" placeholder="First name " required autofocus>
                   <label for="inputFirstName">First name</label>

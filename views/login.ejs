@@ -9,6 +9,7 @@
             <div class="card-body">       
               <h5 class="card-title text-center">Login</h5>
               <form class="form-signin" action="/login" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="form-label-group">
                   <input name="username" type="email" id="email" class="form-control" placeholder="Email" required>
                   <label for="email">Email</label>
@@ -18,6 +19,9 @@
                   <label for="inputPassword">Password</label>
                 </div>
                 <button class="btn btn-lg btn-dark btn-block text-uppercase" type="submit" style="font-size:15px;">Sign in</button>
+                <div class="text-center mt-2">
+                  <a href="/forgot-password">Forgot password?</a>
+                </div>
                 <hr class="my-4">
                 <div class="d-flex align-items-center justify-content-center mb-3">
                   <h6 class="card-text mb-0">Don't have an account? </h6>

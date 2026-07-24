@@ -33,7 +33,14 @@
             <hr class="my-4">
             <div class=row style="margin: 13px;margin-bottom:0px;margin-top:0px;">
               <div class="col-sm-6 col-lg-4"> Flat :</div>
-              <div class="col-sm-6 col-lg-8"><span class="profile-text"><%= resident.flatNumber %></span></div>
+              <div class="col-sm-6 col-lg-8">
+                <span class="profile-text">
+                  <%= resident.flatNumber %>
+                  <% if (resident.unit) { %>
+                    (Floor <%= resident.unit.floor %>, <%= resident.unit.unitType %>, <%= resident.unit.occupancyStatus %>)
+                  <% } %>
+                </span>
+              </div>
             </div>
             <hr class="my-4">
             <div class=row style="margin: 13px;margin-bottom:0px;margin-top:0px;">

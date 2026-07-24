@@ -8,6 +8,7 @@
         <h4>Approve New Residents</h4>
       </div>
       <form action="/approveResident" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <% appliedResidents.forEach(user => { %>
           <div style="max-width:500px; text-align:center; margin:auto; display:block; padding:10px 10%;background-color:whitesmoke; border-radius:0.5rem; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.01); margin-bottom: 10px;">
             <p><%= user.firstName %> <%= user.lastName %> - <%= user.flatNumber %></p>
@@ -29,6 +30,9 @@
         <ul class="list-group zoom">
           <li class="list-group-item flat-number">
             <i class="fas fa-house-user"></i> <%= resident.flatNumber %>
+            <% if (resident.unit) { %>
+              <small>(Floor <%= resident.unit.floor %>, <%= resident.unit.unitType %>)</small>
+            <% } %>
           </li>
           <li class="list-group-item flat-owner"><%= resident.firstName %> <%= resident.lastName %></li>
           <li class="list-group-item">

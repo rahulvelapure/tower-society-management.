@@ -215,6 +215,7 @@
   checkoutButton.addEventListener("click", function () {
     fetch("/checkout-session", {
       method: "POST",
+      headers: { "CSRF-Token": "<%= csrfToken %>" },
     })
       .then(function (response) {
         return response.json();

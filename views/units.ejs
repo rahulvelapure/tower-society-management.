@@ -1,0 +1,51 @@
+<!-- Residential flat master (floors 1-28, 4 flats each = 112 flats) -->
+<%- include('partials/header') %>
+
+<div style="padding:4%; padding-top:0%; font-family:sans-serif;font-size: 15px;">
+  <h2 style="background-color:rgb(51, 51, 51); padding:18px;color:white; text-align: center; border-radius: 1rem; font-size: 20px; max-width: 1000px; margin: auto; margin-bottom: 20px;">
+    Flats &amp; Units
+  </h2>
+
+  <div style="max-width:1000px; margin:auto; margin-bottom:20px; text-align:center;">
+    <a href="/units/new" class="btn btn-primary btn-sm" style="border-radius:15px;">+ Add unit</a>
+    <a href="/units/initialize" class="btn btn-default btn-sm" style="border-radius:15px;">Initialize Flat Master&hellip;</a>
+  </div>
+
+  <% if (!floorNumbers.length) { %>
+    <p style="text-align:center;">No units yet. Use "Initialize Flat Master" to create the confirmed 112 residential flats (floors 1&ndash;28, 4 per floor), or add units one at a time.</p>
+  <% } %>
+
+  <% floorNumbers.slice().reverse().forEach(floor => { %>
+    <div style="max-width:1000px; margin:auto; margin-bottom:15px; background-color:whitesmoke; border-radius:0.5rem; padding:10px 3%;">
+      <h4>Floor <%= floor %></h4>
+      <div class="flex-container">
+        <% floors[floor].forEach(unit => { %>
+          <div>
+            <ul class="list-group zoom">
+              <li class="list-group-item flat-number">
+                <i class="fas fa-door-open"></i> <%= unit.flatNumber %> (<%= unit.unitType %>)
+              </li>
+              <li class="list-group-item">
+                Status: <%= unit.occupancyStatus %>
+              </li>
+              <li class="list-group-item">
+                <% if (unit.occupancyStatus === 'owner-occupied' && unit.owner && unit.owner.name) { %>
+                  Owner: <%= unit.owner.name %>
+                <% } else if (unit.occupancyStatus === 'tenant-occupied' && unit.tenant && unit.tenant.name) { %>
+                  Tenant: <%= unit.tenant.name %>
+                <% } else { %>
+                  &mdash;
+                <% } %>
+              </li>
+              <li class="list-group-item">
+                <a href="/units/<%= unit._id %>/edit">Edit</a>
+              </li>
+            </ul>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% }) %>
+</div>
+
+<%- include('partials/footer') %>

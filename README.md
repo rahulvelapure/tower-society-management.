@@ -56,6 +56,10 @@ Provide flexibility to members for managing and updating registered member detai
 
 At this point, you have all the necessary files to run the projet. You will still need to configure your MongoDB URI & Stripe (optional) in .env file.
 
+Optional: configure `SMTP_*` env vars to send real emails (password reset, etc.) - without them, emails are logged to the console instead.
+
+**Note on file uploads:** uploaded files (attachments, receipts) are stored on local disk under `public/uploads` by default. Render's free-tier disk is ephemeral and gets wiped on every deploy/restart, so uploads will not persist there - attach a Render persistent disk or migrate to cloud storage (e.g. Cloudinary, S3) before relying on uploads in production.
+
 ## Contributions
 <a href="https://github.com/abhijeetpandit7/e-society/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=abhijeetpandit7/e-society" />

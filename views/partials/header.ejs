@@ -38,6 +38,9 @@
       <div class="collapse navbar-collapse" id="myNavbar">
         <ul class="nav navbar-nav" id="navlist">
           <li><a href="/residents">Residents</a></li>
+          <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+            <li><a href="/units">Units</a></li>
+          <% } %>
           <li><a href="/noticeboard">Noticeboard</a></li>
           <li><a href="/bill">Bill</a></li>
           <li><a href="/helpdesk">Helpdesk</a></li>

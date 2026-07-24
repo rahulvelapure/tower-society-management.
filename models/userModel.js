@@ -18,9 +18,17 @@ const userSchema = new mongoose.Schema (
 			type: String,
 			required: true
 		},
+		society: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'society'
+		},
 		flatNumber: {
 			type: String,
 			required: true
+		},
+		unit: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'unit'
 		},
 		firstName: {
 			type: String,
@@ -40,7 +48,9 @@ const userSchema = new mongoose.Schema (
 			amount: Number,
 			invoice: String
 		},
-		makePayment: Number
+		makePayment: Number,
+		passwordResetToken: String,
+		passwordResetExpires: Date
 	},
 	{
 		timestamps: true

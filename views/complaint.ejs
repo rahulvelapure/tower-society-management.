@@ -9,6 +9,7 @@
       </div>
       <div class="panel-body">
           <form action="/complaint" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <label>Category</label>
             <select name="category" class="form-control">
               <option>Car Parking</option>

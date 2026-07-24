@@ -15,6 +15,7 @@
     </row>
     <div class="row">
       <form action="/closeTicket" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <% users.forEach((user) => { %>
           <% let isUserTicketOpen = user.complaints.some(ticket => {if(ticket.status==='open') {return true}}) %>
           <% if(isUserTicketOpen) { %>
