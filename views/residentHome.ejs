@@ -1,0 +1,60 @@
+<%- include('partials/appHead', { pageTitle: 'Home' }) %>
+<%- include('partials/appNav', { active: 'dashboard', pageTitle: 'Home' }) %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Welcome, <%= resident.firstName %></h1>
+    <div class="sub">Your <%= brand.name %> community at a glance.</div>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card card-pad">
+    <div class="section-title">My flat</div>
+    <div class="kpi-value mono" style="font-size:26px; margin-top:8px;">
+      <%= resident.unit ? resident.unit.flatNumber : (resident.flatNumber || '—') %>
+    </div>
+    <div class="text-muted" style="font-size:13.5px;">
+      <% if (resident.unit) { %>Floor <%= resident.unit.floor %><% } %>
+      <% if (resident.occupancyType) { %> · <%= resident.occupancyType.charAt(0).toUpperCase()+resident.occupancyType.slice(1) %><% } %>
+    </div>
+    <div class="flex gap-2 wrap mt-4">
+      <a class="btn btn-primary btn-sm" href="/bill">View bill</a>
+      <a class="btn btn-ghost btn-sm" href="/helpdesk">Raise a complaint</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Recent notices</h3><a class="caption" href="/noticeboard">View all</a></div>
+    <div class="card-pad">
+      <% if (!notices.length) { %>
+        <div class="empty-state" style="padding:20px 0;">
+          <div class="section-title">No notices yet</div>
+          <p class="text-muted">Community notices will appear here.</p>
+        </div>
+      <% } else { %>
+        <div class="stack">
+          <% notices.forEach(n => { %>
+            <div style="border-bottom:1px solid var(--border); padding-bottom:12px;">
+              <div class="cell-strong"><%= n.subject %></div>
+              <% if (n.date) { %><div class="caption"><%= n.date %></div><% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-6">
+  <div class="card-head"><h3>Quick links</h3></div>
+  <div class="card-pad grid" style="grid-template-columns: repeat(auto-fit, minmax(150px,1fr));">
+    <a class="btn btn-ghost" href="/bill">My bills</a>
+    <a class="btn btn-ghost" href="/noticeboard">Notices</a>
+    <a class="btn btn-ghost" href="/helpdesk">Complaints</a>
+    <a class="btn btn-ghost" href="/contacts">Emergency</a>
+    <a class="btn btn-ghost" href="/profile">Profile</a>
+  </div>
+</div>
+
+<%- include('partials/appFoot') %>

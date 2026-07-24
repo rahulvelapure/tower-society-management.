@@ -1,0 +1,77 @@
+<%- include('partials/appHead', { pageTitle: 'Dashboard' }) %>
+<%- include('partials/appNav', { active: 'dashboard', pageTitle: 'Dashboard' }) %>
+
+<%
+  function ic(inner){ return "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>"+inner+"</svg>"; }
+  const kpis = [
+    { label: 'Total flats', value: stats.totalFlats, sub: 'Floors 1–28 · 4 per floor', icon: "<path d='M3 21h18'/><path d='M5 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16'/><path d='M15 21V9h3a1 1 0 0 1 1 1v11'/>" },
+    { label: 'Occupied', value: stats.occupied, sub: 'Owner or tenant occupied', icon: "<path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/>" },
+    { label: 'Vacant', value: stats.vacant, sub: 'No occupancy recorded', icon: "<path d='M3 9.5 12 3l9 6.5'/><path d='M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10'/>" },
+    { label: 'Residents', value: stats.residentsCount, sub: 'Member accounts', icon: "<path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M23 21v-2a4 4 0 0 0-3-3.87'/>" },
+    { label: 'Pending activations', value: stats.pendingActivations, sub: 'Invited, not yet activated', icon: "<path d='M22 2 11 13'/><path d='M22 2 15 22l-4-9-9-4 20-7z'/>" },
+    { label: 'Open complaints', value: stats.openComplaints, sub: 'Awaiting resolution', icon: "<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>" }
+  ];
+%>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <div class="sub">Community overview for <%= brand.name %>.</div>
+  </div>
+</div>
+
+<% if (!flatMasterReady) { %>
+  <div class="flash flash-info">
+    The flat master hasn't been initialized yet.
+    <a href="/units/initialize">Initialize the 112 residential flats</a> to get started.
+  </div>
+<% } %>
+
+<div class="grid kpi-grid">
+  <% kpis.forEach(k => { %>
+    <div class="kpi">
+      <div class="kpi-top">
+        <span class="kpi-label"><%= k.label %></span>
+        <span class="kpi-icon"><%- ic(k.icon) %></span>
+      </div>
+      <div class="kpi-value mono"><%= k.value %></div>
+      <div class="kpi-sub"><%= k.sub %></div>
+    </div>
+  <% }) %>
+</div>
+
+<div class="grid cols-2 mt-6">
+  <div class="card">
+    <div class="card-head"><h3>Recent notices</h3><a class="caption" href="/noticeboard">View all</a></div>
+    <div class="card-pad">
+      <% if (!notices.length) { %>
+        <div class="empty-state" style="padding:24px 0;">
+          <div class="section-title">No notices yet</div>
+          <p class="text-muted">Posted notices will appear here.</p>
+        </div>
+      <% } else { %>
+        <div class="stack">
+          <% notices.forEach(n => { %>
+            <div style="border-bottom:1px solid var(--border); padding-bottom:12px;">
+              <div class="cell-strong"><%= n.subject %></div>
+              <% if (n.date) { %><div class="caption"><%= n.date %></div><% } %>
+              <% if (n.details) { %><div class="text-muted" style="font-size:13.5px; margin-top:2px;"><%= n.details %></div><% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Quick actions</h3></div>
+    <div class="card-pad stack">
+      <a class="btn btn-primary btn-block" href="/members/new">Add member</a>
+      <a class="btn btn-ghost btn-block" href="/units">Manage flats</a>
+      <a class="btn btn-ghost btn-block" href="/notice">Post a notice</a>
+      <a class="btn btn-ghost btn-block" href="/helpdesk">Review complaints</a>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/appFoot') %>

@@ -7,10 +7,8 @@ const MongoStore = require('connect-mongo');
 // Access environment variables (must run before requiring routers that read process.env at load time)
 dotenv.config();
 
-const user_collection = require("./models/userModel");
-const society_collection = require("./models/societyModel");
-const visit_collection = require("./models/visitModel");
 const db = require(__dirname + '/config/db');
+const brand = require('./config/brand');
 
 const app = express()
 app.set('view engine', 'ejs');
@@ -46,42 +44,21 @@ const { attachCsrfToken, verifyCsrfToken } = require('./middleware/csrf');
 app.use(attachCsrfToken);
 app.use(verifyCsrfToken);
 
+// Make brand + current user available to every view (centralized branding).
+app.use((req, res, next) => {
+  res.locals.brand = brand;
+  res.locals.currentUser = req.user || null;
+  next();
+});
+
 db.connectDB()
 
-app.get("/", async (req, res) => {
-  // Track page visits + users & societies registered
-  try {
-    let pageVisit = await visit_collection.Visit.findOne();
-    if (!pageVisit) {
-      pageVisit = new visit_collection.Visit({
-        count: 0
-      });
-    }
-    if (process.env.NODE_ENV === 'production') {
-      pageVisit.count += 1;
-    }
-    await pageVisit.save();
-
-    const societies = await society_collection.Society.find();
-    const cities = societies.map(society => society.societyAddress.city.toLowerCase());
-    const cityCount = new Set(cities).size;
-
-    const foundUser = await user_collection.User.find();
-
-    res.render("index", {
-      city: cityCount,
-      society: societies.length,
-      user: foundUser.length,
-      visit: pageVisit.count
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
+// Closed private portal: the public entry point is the login page.
+app.get("/", (req, res) => res.redirect(req.isAuthenticated() ? "/home" : "/login"));
 
 app.use(require('./routes/auth'));
 app.use(require('./routes/resident'));
+app.use(require('./routes/members'));
 app.use(require('./routes/notice'));
 app.use(require('./routes/bill'));
 app.use(require('./routes/helpdesk'));

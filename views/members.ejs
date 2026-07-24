@@ -1,0 +1,104 @@
+<%- include('partials/appHead', { pageTitle: 'Members' }) %>
+<%- include('partials/appNav', { active: 'members', pageTitle: 'Members' }) %>
+
+<%
+  function statusBadge(s) {
+    if (s === 'active') return '<span class="badge badge-success"><span class="dot"></span>Active</span>';
+    if (s === 'inactive') return '<span class="badge badge-danger"><span class="dot"></span>Inactive</span>';
+    return '<span class="badge badge-warning"><span class="dot"></span>Invitation pending</span>';
+  }
+%>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Members</h1>
+    <div class="sub">Manage authorized residents of the community.</div>
+  </div>
+  <a href="/members/new" class="btn btn-primary">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+    Add Member
+  </a>
+</div>
+
+<form class="card card-pad" method="GET" action="/members" style="margin-bottom:20px;">
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items:end;">
+    <div class="form-field" style="margin:0;">
+      <label class="label">Search</label>
+      <input class="input" type="text" name="q" value="<%= q %>" placeholder="Name, email or flat">
+    </div>
+    <div class="form-field" style="margin:0;">
+      <label class="label">Account status</label>
+      <select class="input" name="status">
+        <option value="">All</option>
+        <% ['active','invited','inactive'].forEach(s => { %>
+          <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= s.charAt(0).toUpperCase()+s.slice(1) %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="form-field" style="margin:0;">
+      <label class="label">Occupancy</label>
+      <select class="input" name="occupancy">
+        <option value="">All</option>
+        <% ['owner','tenant','family','occupant'].forEach(o => { %>
+          <option value="<%= o %>" <%= occupancy === o ? 'selected' : '' %>><%= o.charAt(0).toUpperCase()+o.slice(1) %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-primary" type="submit">Filter</button>
+      <a class="btn btn-ghost" href="/members">Reset</a>
+    </div>
+  </div>
+</form>
+
+<% if (!members.length) { %>
+  <div class="card">
+    <div class="empty-state">
+      <div class="icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+      <div class="section-title">No members found</div>
+      <p class="text-muted">Add your first member to get started.</p>
+    </div>
+  </div>
+<% } else { %>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>Member</th><th>Flat</th><th>Occupancy</th><th>Contact</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <% members.forEach(m => { %>
+          <tr>
+            <td>
+              <div class="cell-strong"><%= m.firstName %> <%= m.lastName %> <% if (m.isAdmin) { %><span class="badge badge-info" style="margin-left:6px;">Admin</span><% } %></div>
+              <div class="caption"><%= m.username %></div>
+            </td>
+            <td><%= m.unit ? ('Floor ' + m.unit.floor + ' · ' + m.unit.flatNumber) : (m.flatNumber || '—') %></td>
+            <td><%= m.occupancyType ? (m.occupancyType.charAt(0).toUpperCase()+m.occupancyType.slice(1)) : '—' %></td>
+            <td class="mono"><%= m.phoneNumber || '—' %></td>
+            <td><%- statusBadge(m.accountStatus) %></td>
+            <td>
+              <div class="flex gap-2 wrap">
+                <a class="btn btn-ghost btn-sm" href="/members/<%= m._id %>/edit">Edit</a>
+                <% if (m.accountStatus === 'invited') { %>
+                  <form action="/members/<%= m._id %>/resend" method="POST" style="display:inline;">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-ghost btn-sm" type="submit">Resend link</button>
+                  </form>
+                <% } %>
+                <% if (!m.isAdmin) { %>
+                  <form action="/members/<%= m._id %>/status" method="POST" style="display:inline;" onsubmit="return confirm('<%= m.accountStatus === 'inactive' ? 'Reactivate this member?' : 'Deactivate this member? They will be unable to sign in.' %>');">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="action" value="<%= m.accountStatus === 'inactive' ? 'activate' : 'deactivate' %>">
+                    <button class="btn btn-sm <%= m.accountStatus === 'inactive' ? 'btn-ghost' : 'btn-danger' %>" type="submit"><%= m.accountStatus === 'inactive' ? 'Activate' : 'Deactivate' %></button>
+                  </form>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } %>
+
+<%- include('partials/appFoot') %>

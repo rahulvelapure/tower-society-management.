@@ -1,4 +1,4 @@
-<%- include('partials/appHead', { pageTitle: 'Sign in' }) %>
+<%- include('partials/appHead', { pageTitle: 'Activate account' }) %>
 
 <div class="auth-wrap">
   <div class="auth-card">
@@ -10,34 +10,27 @@
     </div>
 
     <div class="auth-welcome">
-      <h1>Welcome back</h1>
-      <p>Sign in to your residential community</p>
+      <h1>Activate your account</h1>
+      <p><%= firstName ? 'Hi ' + firstName + ', set' : 'Set' %> a password to finish setting up your 27East account.</p>
     </div>
 
     <% if (typeof error !== 'undefined' && error) { %>
       <div class="flash flash-error" style="margin-top:20px;"><%= error %></div>
     <% } %>
 
-    <form class="auth-form" action="/login" method="POST">
+    <form class="auth-form" action="/activate/<%= token %>" method="POST">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="form-field">
-        <label class="label" for="email">Username / Email</label>
-        <input class="input" name="username" id="email" type="email" placeholder="you@example.com" autocomplete="username" required autofocus>
-      </div>
-      <div class="form-field">
-        <label class="label" for="password">Password</label>
+        <label class="label" for="password">Create password</label>
         <div class="input-group">
-          <input class="input" name="password" id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required style="padding-right:40px;">
-          <button type="button" class="toggle-pw" aria-label="Show password" onclick="(function(b){var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';})(this)">
+          <input class="input" name="password" id="password" type="password" placeholder="At least 8 characters" minlength="8" autocomplete="new-password" required autofocus style="padding-right:40px;">
+          <button type="button" class="toggle-pw" aria-label="Show password" onclick="(function(){var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';})()">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
+        <div class="field-hint">Use at least 8 characters.</div>
       </div>
-      <div class="auth-row">
-        <span></span>
-        <a href="/forgot-password">Forgot password?</a>
-      </div>
-      <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+      <button class="btn btn-primary btn-block" type="submit">Activate &amp; continue</button>
     </form>
 
     <div class="auth-foot"><%= brand.tagline %></div>

@@ -42,6 +42,23 @@ const userSchema = new mongoose.Schema (
 			type: Number,
 			required: true
 		},
+		// How this person relates to their flat. A single Unit can have multiple
+		// User accounts (owner + tenant + family), each with their own occupancyType.
+		occupancyType: {
+			type: String,
+			enum: ['owner', 'tenant', 'family', 'occupant'],
+		},
+		// Account lifecycle for the closed/private onboarding model:
+		//   invited  - admin created the account; resident hasn't set a password yet
+		//   active   - resident has activated (set a password) and can sign in
+		//   inactive - deactivated by admin; blocked from signing in
+		// Defaults to 'active' so every pre-existing account (incl. the current
+		// administrator) keeps working unchanged.
+		accountStatus: {
+			type: String,
+			enum: ['invited', 'active', 'inactive'],
+			default: 'active'
+		},
 		complaints: Array,
 		lastPayment: {
 			date: Date,
@@ -50,7 +67,11 @@ const userSchema = new mongoose.Schema (
 		},
 		makePayment: Number,
 		passwordResetToken: String,
-		passwordResetExpires: Date
+		passwordResetExpires: Date,
+		// Account-activation link token (admin-created members set their own password).
+		// Only a SHA-256 hash is stored; the raw token lives only in the link.
+		activationToken: String,
+		activationExpires: Date
 	},
 	{
 		timestamps: true

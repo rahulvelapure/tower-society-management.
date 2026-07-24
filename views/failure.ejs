@@ -1,31 +1,24 @@
-<!-- Login/Signup/Register unsuccessful -->
-<%- include('partials/headerForm') %>
+<%- include('partials/appHead', { pageTitle: 'Notice' }) %>
 
-  <body>
-    <div class="container">
-      <div class="row">
-        <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
-          <div class="card card-signin my-5">
-            <div class="card-body">
-              <h5 class="card-title text-center" style="font-size: 40px; "><b>Failed</b></h5>
-              <hr class="my-4">
-              <h5 class="card-title text-center" style="font-size: 80px; font-family: sans-serif; margin-top: -10px;"><b>✖</b></h5>
-              <form class="form-signin">
-                <h6 class="card-text text-center"><%= message %></h6></b>
-                <br>
-                <a href="<%= href %>" class="btn  btn-danger btn-block text-uppercase" type="submit" style="font-size:15px;">Try Again</a>
-                <hr class="my-4">
-                <h6 class="card-text text-center"><%= messageSecondary %></h6></b>
-                <a href="<%= hrefSecondary %>" class="btn  btn-success btn-block text-uppercase" type="submit" style="font-size:15px;">
-                  <%= buttonSecondary %>
-                </a>
-                <a href="/" class="btn  btn-secondary btn-block text-uppercase">Home</a>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
+<div class="auth-wrap">
+  <div class="auth-card" style="text-align:center;">
+    <div class="auth-brand" style="justify-content:center;">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
+      </span>
+      <span><%= brand.name %></span>
     </div>
-  </body>
 
+    <p style="margin-top:22px; color:var(--text); font-size:15px;"><%= message %></p>
+
+    <a href="<%= href %>" class="btn btn-primary btn-block" style="margin-top:16px;">Try again</a>
+
+    <% if (typeof messageSecondary !== 'undefined' && messageSecondary) { %>
+      <p class="text-muted" style="margin-top:20px; font-size:13.5px;"><%= messageSecondary %></p>
+      <a href="<%= hrefSecondary %>" class="btn btn-ghost btn-block"><%= buttonSecondary %></a>
+    <% } %>
+  </div>
+</div>
+
+</body>
 </html>

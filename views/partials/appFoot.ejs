@@ -1,0 +1,12 @@
+  </main>
+</div>
+<script>
+  // Close the user dropdown when clicking outside it.
+  document.addEventListener('click', function (e) {
+    document.querySelectorAll('.user-dropdown.open').forEach(function (dd) {
+      if (!dd.parentElement.contains(e.target)) dd.classList.remove('open');
+    });
+  });
+</script>
+</body>
+</html>

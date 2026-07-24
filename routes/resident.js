@@ -2,28 +2,58 @@ const express = require('express');
 const router = express.Router();
 const user_collection = require("../models/userModel");
 const society_collection = require("../models/societyModel");
+const unit_collection = require("../models/unitModel");
 const { ensureAuthenticated, ensureApproved, ensureAdmin } = require("../middleware/auth");
 
-router.get("/home", ensureAuthenticated, (req, res) => {
-    // Conditionally render home as per user validation status
-    if (req.user.validation == 'approved') {
-        res.render("home");
-    } else if (req.user.validation == 'applied') {
-        res.render("homeStandby", {
-            icon: 'fa-user-clock',
-            title: 'Account pending for approval',
-            content: 'Your account will be active as soon as it is approved by your community.' +
-                'It usually takes 1-2 days for approval. If it is taking longer to get approval, ' +
-                'contact your society admin.'
-        });
-    } else {
-        res.render("homeStandby", {
-            icon: 'fa-user-lock',
-            title: 'Account approval declined',
-            content: 'Your account registration has been declined. ' +
-                'Please contact the society administrator for more details.' +
-                'You can edit the request and apply again.'
-        });
+function recentNotices(society, limit = 5) {
+    const board = (society && society.noticeboard) ? society.noticeboard.filter(n => n && n.subject) : [];
+    return board.slice(-limit).reverse();
+}
+
+router.get("/home", ensureAuthenticated, async (req, res) => {
+    try {
+        // Not-yet-active accounts (legacy 'applied'/'declined') see a standby screen.
+        if (req.user.validation !== 'approved') {
+            return res.render("homeStandby", req.user.validation === 'applied'
+                ? { title: 'Account pending approval', content: 'Your account will be active once approved by your community administrator.' }
+                : { title: 'Account not active', content: 'Please contact the society administrator for access.' });
+        }
+
+        const society = req.user.society
+            ? await society_collection.Society.findById(req.user.society)
+            : await society_collection.getConfiguredSociety();
+        const societyFilter = society
+            ? { $or: [{ society: society._id }, { societyName: society.societyName }] }
+            : { societyName: req.user.societyName };
+
+        if (req.user.isAdmin) {
+            // Admin dashboard - every number below is computed from real data.
+            const units = society ? await unit_collection.Unit.find({ society: society._id }) : [];
+            const totalFlats = units.length;
+            const occupied = units.filter(u => u.occupancyStatus && u.occupancyStatus !== 'vacant').length;
+            const vacant = totalFlats - occupied;
+
+            const [residentsCount, pendingActivations, complaintDocs] = await Promise.all([
+                user_collection.User.countDocuments({ ...societyFilter, isAdmin: false }),
+                user_collection.User.countDocuments({ ...societyFilter, accountStatus: 'invited' }),
+                user_collection.User.find(societyFilter, { complaints: 1 })
+            ]);
+            const openComplaints = complaintDocs.reduce((sum, u) =>
+                sum + ((u.complaints || []).filter(c => c && c.status === 'open').length), 0);
+
+            return res.render("dashboard", {
+                stats: { totalFlats, occupied, vacant, residentsCount, pendingActivations, openComplaints },
+                notices: recentNotices(society),
+                flatMasterReady: totalFlats > 0
+            });
+        }
+
+        // Resident home
+        const foundUser = await user_collection.User.findById(req.user.id).populate('unit');
+        return res.render("residentHome", { resident: foundUser, notices: recentNotices(society) });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Server error");
     }
 });
 

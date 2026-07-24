@@ -1,0 +1,88 @@
+<%
+  const _active = (typeof active !== 'undefined') ? active : '';
+  const isAdmin = currentUser && currentUser.isAdmin;
+
+  // One consistent stroke-icon set (Feather-style). Returns inner SVG markup.
+  function icon(name) {
+    const p = {
+      dashboard: "<rect x='3' y='3' width='7' height='7' rx='1'/><rect x='14' y='3' width='7' height='7' rx='1'/><rect x='14' y='14' width='7' height='7' rx='1'/><rect x='3' y='14' width='7' height='7' rx='1'/>",
+      flats: "<path d='M3 21h18'/><path d='M5 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16'/><path d='M15 21V9h3a1 1 0 0 1 1 1v11'/><path d='M8 7h1M8 11h1M8 15h1'/>",
+      members: "<path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M23 21v-2a4 4 0 0 0-3-3.87'/><path d='M16 3.13a4 4 0 0 1 0 7.75'/>",
+      bills: "<rect x='3' y='4' width='18' height='16' rx='2'/><path d='M3 10h18'/><path d='M7 15h4'/>",
+      notices: "<path d='M3 11l18-5v12L3 14v-3z'/><path d='M11.6 16.8a3 3 0 1 1-5.8-1.6'/>",
+      complaints: "<path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/>",
+      emergency: "<path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z'/>",
+      residents: "<path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'/><circle cx='9' cy='7' r='4'/><path d='M23 21v-2a4 4 0 0 0-3-3.87'/><path d='M16 3.13a4 4 0 0 1 0 7.75'/>",
+      profile: "<path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/>",
+      home: "<path d='M3 9.5 12 3l9 6.5'/><path d='M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10'/>",
+      logout: "<path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/><path d='M16 17l5-5-5-5'/><path d='M21 12H9'/>",
+      menu: "<path d='M3 12h18M3 6h18M3 18h18'/>"
+    };
+    return "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>" + (p[name] || "") + "</svg>";
+  }
+
+  const adminGroups = [
+    { label: null, items: [ ['dashboard','Dashboard','/home'] ] },
+    { label: 'Flats & Members', items: [ ['flats','Flats','/units'], ['members','Members','/members'] ] },
+    { label: 'Finance', items: [ ['bills','Bills','/bill'] ] },
+    { label: 'Community', items: [ ['notices','Notices','/noticeboard'], ['complaints','Complaints','/helpdesk'], ['emergency','Emergency','/contacts'] ] },
+    { label: 'Account', items: [ ['profile','Profile','/profile'] ] }
+  ];
+  const residentGroups = [
+    { label: null, items: [ ['dashboard','Home','/home'] ] },
+    { label: 'My Residence', items: [ ['bills','My Bills','/bill'], ['residents','Residents','/residents'] ] },
+    { label: 'Community', items: [ ['notices','Notices','/noticeboard'], ['complaints','Complaints','/helpdesk'], ['emergency','Emergency','/contacts'] ] },
+    { label: 'Account', items: [ ['profile','Profile','/profile'] ] }
+  ];
+  const groups = isAdmin ? adminGroups : residentGroups;
+
+  const adminMobile = [ ['dashboard','Dashboard','/home'], ['flats','Flats','/units'], ['members','Members','/members'], ['notices','Notices','/noticeboard'], ['profile','Profile','/profile'] ];
+  const residentMobile = [ ['dashboard','Home','/home'], ['bills','Bills','/bill'], ['notices','Notices','/noticeboard'], ['complaints','Helpdesk','/helpdesk'], ['profile','Profile','/profile'] ];
+  const mobileItems = isAdmin ? adminMobile : residentMobile;
+
+  const initials = currentUser ? ((currentUser.firstName||' ')[0] + (currentUser.lastName||' ')[0]).toUpperCase() : '?';
+%>
+<div class="app-shell" id="appShell">
+  <div class="scrim" onclick="document.getElementById('appShell').classList.remove('nav-open')"></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-mark"><%- icon('home') %></span>
+      <span><%= brand.name %></span>
+    </div>
+    <nav class="sidebar-nav">
+      <% groups.forEach(group => { %>
+        <% if (group.label) { %><div class="nav-group-label"><%= group.label %></div><% } %>
+        <% group.items.forEach(([key, label, href]) => { %>
+          <a class="nav-item <%= _active === key ? 'active' : '' %>" href="<%= href %>"><%- icon(key) %><span><%= label %></span></a>
+        <% }) %>
+      <% }) %>
+    </nav>
+    <div class="sidebar-foot">
+      <a class="nav-item" href="/logout"><%- icon('logout') %><span>Logout</span></a>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <button class="hamburger" aria-label="Toggle menu" onclick="document.getElementById('appShell').classList.toggle('nav-open')"><%- icon('menu') %></button>
+    <div class="topbar-context"><%= (typeof pageTitle !== 'undefined' && pageTitle) ? pageTitle : brand.name %></div>
+    <div class="topbar-spacer"></div>
+    <div class="user-menu">
+      <button class="user-btn" onclick="this.nextElementSibling.classList.toggle('open')">
+        <span class="avatar"><%= initials %></span>
+        <span class="user-name"><%= currentUser ? currentUser.firstName : '' %></span>
+      </button>
+      <div class="user-dropdown">
+        <a href="/profile">My profile</a>
+        <a href="/logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <nav class="mobile-nav">
+    <% mobileItems.forEach(([key, label, href]) => { %>
+      <a class="<%= _active === key ? 'active' : '' %>" href="<%= href %>"><%- icon(key) %><span><%= label %></span></a>
+    <% }) %>
+  </nav>
+
+  <main class="content">

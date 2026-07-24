@@ -19,12 +19,11 @@ Generated from the actual guards in `routes/*.js` and `server.js` after the Phas
 | POST | `/login` | No | N/A | N/A | public, rate-limited (20/15min/IP) | N/A | Yes | passport-local-mongoose (credential check) |
 | GET | `/loginFailure` | No | N/A | N/A | public | N/A | N/A (GET) | N/A |
 | GET | `/logout` | No* | N/A | N/A | public | N/A | N/A (GET) | N/A |
-| GET | `/signup` | No | N/A | N/A | public | N/A | N/A (GET) | Renders the single configured society (27 East) + its canonical flats; no society/flat free-text |
-| POST | `/signup` | No | N/A | N/A | public | N/A | Yes | Society resolved server-side (never from client); flat must be a valid canonical `Unit` of that society (`unitId` validated as ObjectId + ownership) - blocks arbitrary/typed flats |
-| GET | `/register` | No | N/A | N/A | **disabled** - redirects to `/login` | N/A | N/A (GET) | Society registration is disabled (single fixed tower) |
-| POST | `/register` | No | N/A | N/A | **disabled** - returns 403, creates nothing | N/A | N/A (blocked before any write) | Hard backend block so no additional society can be created even by direct POST |
-| GET | `/newRequest` | Yes | Must be **not** approved | No | own pending signup only | Own account (`req.user`) | N/A (GET) | Renders single society + canonical flats |
-| POST | `/newRequest` | Yes | No (intentional - lets pending users edit their request) | No | own pending signup only | Own account (`req.user.id`) | Yes | Society resolved server-side; flat must be a valid canonical `Unit` (`unitId` validated) |
+| GET/POST | `/signup` | No | N/A | N/A | **disabled** - GET redirects to `/login`, POST returns 403 | N/A | 403 before any write | Closed private system: no public self-registration |
+| GET/POST | `/register` | No | N/A | N/A | **disabled** - GET redirects to `/login`, POST returns 403, creates nothing | N/A | 403 before any write | No additional society can be created, even by direct POST |
+| GET/POST | `/newRequest` | No | N/A | N/A | **disabled** - GET redirects to `/home`, POST returns 403 | N/A | 403 before any write | Self sign-up removed |
+| GET | `/activate/:token` | No | N/A | N/A | holder of a valid, unexpired activation token | N/A | N/A (GET) | Token existence + expiry checked (hashed lookup) |
+| POST | `/activate/:token` | No | N/A | N/A | holder of a valid, unexpired, single-use activation token | N/A | Yes | Token hashed + expiry + single-use; min 8-char password; sets `accountStatus: active` |
 | GET | `/forgot-password` | No | N/A | N/A | public, rate-limited on POST | N/A | N/A (GET) | N/A |
 | POST | `/forgot-password` | No | N/A | N/A | public, rate-limited (5/15min/IP) | N/A | Yes | Generic response regardless of match (anti-enumeration) |
 | GET | `/reset-password/:token` | No | N/A | N/A | public - requires valid, unexpired hashed token | N/A | N/A (GET) | Token existence + expiry checked |
@@ -95,6 +94,20 @@ Note on `/closeTicket`: `ticket_index` comes from the submitted form field name 
 | POST | `/units/:id` | Yes | N/A | **Yes** | `manage_units` | N/A | Yes | Same schema validation as create, via `runValidators: true` |
 
 No DELETE route exists for `Unit` in this pass, so "deleting a unit with linked residents" is currently not reachable at all - noted for whenever delete functionality is actually added, not treated as a gap today.
+
+## `routes/members.js` (admin-only member management)
+
+| Method | Route | Auth Required | Approved Required | Admin Required | Role/Permission | Ownership Check | CSRF Protected | Input Validated |
+|---|---|---|---|---|---|---|---|---|
+| GET | `/members` | Yes | N/A | **Yes** | `manage_members` | N/A | N/A (GET) | Search/filter inputs sanitized (regex-escaped) |
+| GET | `/members/new` | Yes | N/A | **Yes** | `manage_members` | N/A | N/A (GET) | N/A |
+| POST | `/members` | Yes | N/A | **Yes** | `manage_members` | N/A | Yes | Email format, unique email, canonical `Unit` ownership, occupancy enum; creates `invited` account (no password), issues hashed activation token |
+| GET | `/members/:id/edit` | Yes | N/A | **Yes** | `manage_members` | N/A | N/A (GET) | 404 if not found |
+| POST | `/members/:id` | Yes | N/A | **Yes** | `manage_members` | N/A | Yes | Canonical `Unit` ownership + occupancy enum |
+| POST | `/members/:id/status` | Yes | N/A | **Yes** | `manage_members` | Admin can't deactivate self | Yes | action ∈ {activate, deactivate}; activate only promotes to `active` if a password exists |
+| POST | `/members/:id/resend` | Yes | N/A | **Yes** | `manage_members` | N/A | Yes | Regenerates hashed, expiring activation token |
+
+Members are created only by an administrator — there is **no** public account creation anywhere in the app. Activation links are shown to the admin (one-time, in-UI) and emailed when SMTP is configured; the raw token is never written to logs.
 
 ## Cross-cutting notes
 

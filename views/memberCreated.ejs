@@ -1,0 +1,31 @@
+<%- include('partials/appHead', { pageTitle: 'Member added' }) %>
+<%- include('partials/appNav', { active: 'members', pageTitle: 'Members' }) %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title"><%= typeof resent !== 'undefined' && resent ? 'Activation link regenerated' : 'Member added' %></h1>
+    <div class="sub"><%= member.firstName %> <%= member.lastName %> · <%= member.username %></div>
+  </div>
+  <a href="/members" class="btn btn-ghost">Back to members</a>
+</div>
+
+<div class="flash flash-success" style="max-width:720px;">
+  Account created for <strong><%= member.firstName %> <%= member.lastName %></strong><% if (unit) { %> · Floor <%= unit.floor %>, Flat <%= unit.flatNumber %><% } %>.
+</div>
+
+<div class="card card-pad" style="max-width:720px;">
+  <div class="section-title">Activation link</div>
+  <p class="text-muted" style="margin-top:6px;">
+    An activation email was sent to <strong><%= member.username %></strong> (delivered only if email is configured).
+    Until email is set up, share this one-time link with the resident so they can set their password. It expires in 7 days.
+  </p>
+  <div class="input-group" style="margin-top:12px;">
+    <input class="input" id="activationLink" value="<%= activationLink %>" readonly onclick="this.select()">
+  </div>
+  <div class="flex gap-2 mt-4">
+    <button class="btn btn-primary" type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('activationLink').value); this.textContent='Copied';">Copy link</button>
+    <a class="btn btn-ghost" href="/members/new">Add another member</a>
+  </div>
+</div>
+
+<%- include('partials/appFoot') %>

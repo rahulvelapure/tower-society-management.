@@ -1,0 +1,82 @@
+<%- include('partials/appHead', { pageTitle: member ? 'Edit member' : 'Add member' }) %>
+<%- include('partials/appNav', { active: 'members', pageTitle: member ? 'Edit Member' : 'Add Member' }) %>
+
+<%
+  const val = (k) => (member && member[k] != null) ? member[k] : '';
+  const currentUnitId = member ? String(member.unit && member.unit._id ? member.unit._id : (member.unit || member.unitId || '')) : '';
+  const currentOcc = member ? (member.occupancyType || '') : '';
+%>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title"><%= member ? 'Edit member' : 'Add member' %></h1>
+    <div class="sub"><%= member ? 'Update this member\'s details.' : 'Create an account and send a secure activation link.' %></div>
+  </div>
+  <a href="/members" class="btn btn-ghost">Back to members</a>
+</div>
+
+<% if (error) { %><div class="flash flash-error" style="max-width:640px;"><%= error %></div><% } %>
+
+<div class="card card-pad" style="max-width:640px;">
+  <form action="<%= member && member._id ? '/members/' + member._id : '/members' %>" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="fieldset-title">Personal information</div>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="form-field">
+        <label class="label">First name <span class="req">*</span></label>
+        <input class="input" name="firstName" value="<%= val('firstName') %>" required>
+      </div>
+      <div class="form-field">
+        <label class="label">Last name <span class="req">*</span></label>
+        <input class="input" name="lastName" value="<%= val('lastName') %>" required>
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="label">Email <span class="req">*</span></label>
+      <input class="input" name="username" type="email" value="<%= val('username') %>" <%= member && member._id ? 'readonly' : 'required' %>>
+      <% if (member && member._id) { %><div class="field-hint">Email can't be changed after the account is created.</div><% } %>
+    </div>
+    <div class="form-field">
+      <label class="label">Phone <span class="req">*</span></label>
+      <input class="input" name="phoneNumber" type="tel" value="<%= val('phoneNumber') %>" required>
+    </div>
+
+    <div class="fieldset-title">Residence</div>
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="form-field">
+        <label class="label">Flat <span class="req">*</span></label>
+        <% if (units && units.length) { %>
+          <select class="input" name="unitId" required>
+            <option value="" disabled <%= currentUnitId ? '' : 'selected' %>>Select flat</option>
+            <% units.forEach(u => { %>
+              <option value="<%= u._id %>" <%= currentUnitId === String(u._id) ? 'selected' : '' %>>Floor <%= u.floor %> · Flat <%= u.flatNumber %></option>
+            <% }) %>
+          </select>
+        <% } else { %>
+          <div class="field-hint" style="color:var(--warning);">No flats yet. Initialize the Flat Master first.</div>
+        <% } %>
+      </div>
+      <div class="form-field">
+        <label class="label">Occupancy type <span class="req">*</span></label>
+        <select class="input" name="occupancyType" required>
+          <option value="" disabled <%= currentOcc ? '' : 'selected' %>>Select type</option>
+          <% ['owner','tenant','family','occupant'].forEach(o => { %>
+            <option value="<%= o %>" <%= currentOcc === o ? 'selected' : '' %>><%= o.charAt(0).toUpperCase()+o.slice(1) %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+
+    <% if (!member || !member._id) { %>
+      <div class="field-hint" style="margin-bottom:16px;">The member will receive a secure link to set their own password. You never see or set their password.</div>
+    <% } %>
+
+    <div class="flex gap-3 mt-4">
+      <button class="btn btn-primary" type="submit" <%= (units && units.length) ? '' : 'disabled' %>><%= member && member._id ? 'Save changes' : 'Create member' %></button>
+      <a class="btn btn-ghost" href="/members">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/appFoot') %>
