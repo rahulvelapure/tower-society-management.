@@ -128,6 +128,29 @@ Finance collections: contain no documents until webhook/success records a
 payment; dropping them loses only post-deploy payment *history* rows (legacy
 `lastPayment` remains authoritative). Webhook: unset `STRIPE_WEBHOOK_SECRET`.
 
+## Post-37fd03f runtime-readiness audit (this round — no bug found in the webhook)
+
+You reported `Cannot GET /webhooks/stripe` when opening that URL in a browser.
+**This is expected** — the route is registered as `POST` only
+(`app.post('/webhooks/stripe', ...)` in `server.js`); Express has no matching
+handler for `GET` on that path, so it returns its default 404-style "Cannot
+GET" text. This is correct and was left as-is — no GET handler was added, and
+the webhook must never become a browser-viewable page (Part 13/14 of your
+brief). A real test requires a signed POST (Stripe CLI / Dashboard test event
+/ an actual Stripe Checkout test payment).
+
+Full re-audit of the deployed code (server.js, routes/stripeWebhook.js,
+lib/payments.js, routes/bill.js) confirmed the webhook, idempotency, and
+ownership/amount verification are correctly implemented — **no functional bug
+found**. One safety gap was closed:
+
+**Added: Stripe mode visibility (`lib/stripeMode.js`).** There was no way to
+confirm TEST vs LIVE mode without reading the raw env var. New helper reads
+only the `SECRET_KEY` *prefix* (`sk_test_`/`sk_live_`) — the key value is never
+logged or exposed — and: (1) prints a one-line mode banner to the server
+console on every boot, (2) shows a small admin-only notice on the Bills page.
+This is the only code change in this round.
+
 ## What remains for 3A-2+
 
 Billing configuration UI + BillingPeriods CRUD (3A-2) → preview/generate/issue

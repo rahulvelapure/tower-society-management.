@@ -9,6 +9,24 @@ dotenv.config();
 
 const db = require(__dirname + '/config/db');
 const brand = require('./config/brand');
+const { stripeMode } = require('./lib/stripeMode');
+
+// Safety banner - never logs the key itself, only which mode it belongs to.
+// Payment gateway validation must run in TEST mode; this makes that visible
+// in the Render logs on every boot instead of requiring a dashboard check.
+switch (stripeMode()) {
+  case 'live':
+    console.warn('[Stripe] LIVE mode detected - real charges will be made.');
+    break;
+  case 'test':
+    console.log('[Stripe] TEST mode - no real charges will be made.');
+    break;
+  case 'unconfigured':
+    console.log('[Stripe] Not configured (SECRET_KEY unset) - online payments disabled.');
+    break;
+  default:
+    console.warn('[Stripe] SECRET_KEY format not recognized - unable to determine mode.');
+}
 
 const app = express()
 app.set('view engine', 'ejs');
@@ -56,6 +74,7 @@ app.use(verifyCsrfToken);
 app.use((req, res, next) => {
   res.locals.brand = brand;
   res.locals.currentUser = req.user || null;
+  res.locals.stripeMode = stripeMode(); // 'test' | 'live' | 'unconfigured' | 'unknown' - never the key itself
   next();
 });
 

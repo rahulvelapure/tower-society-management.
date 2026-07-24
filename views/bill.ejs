@@ -18,6 +18,16 @@
   <% } %>
 <% } %>
 
+<% if (resident.isAdmin && typeof stripeMode !== 'undefined') { %>
+  <% if (stripeMode === 'live') { %>
+    <div class="flash flash-error no-print">Stripe is in LIVE mode — payments here charge real money.</div>
+  <% } else if (stripeMode === 'test') { %>
+    <div class="flash flash-info no-print">Stripe is in TEST mode — no real money is charged. Admin-only notice.</div>
+  <% } else if (stripeMode === 'unconfigured') { %>
+    <div class="flash flash-info no-print">Stripe is not configured — online payments are disabled. Admin-only notice.</div>
+  <% } %>
+<% } %>
+
 <div class="page-header">
   <div>
     <h1 class="page-title">Maintenance bill</h1>
