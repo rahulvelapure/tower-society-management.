@@ -13,11 +13,10 @@
   ];
 %>
 
-<div class="page-header">
-  <div>
-    <h1 class="page-title">Dashboard</h1>
-    <div class="sub">Community overview for <%= brand.name %>.</div>
-  </div>
+<div class="welcome-head" style="margin-bottom:28px;">
+  <div class="hello">Welcome back</div>
+  <div class="who"><%= currentUser.firstName %> <%= currentUser.lastName %></div>
+  <div class="ctx"><%= brand.name %> · Community overview</div>
 </div>
 
 <% if (!flatMasterReady) { %>
@@ -26,6 +25,15 @@
     <a href="/units/initialize">Initialize the 112 residential flats</a> to get started.
   </div>
 <% } %>
+
+<div class="feature-panel" style="margin-bottom:16px;">
+  <div>
+    <div class="eyebrow">Outstanding dues</div>
+    <div class="big">₹<%= stats.outstandingTotal.toLocaleString('en-IN') %></div>
+    <div class="caption" style="margin-top:4px;">Across all members with pending maintenance.</div>
+  </div>
+  <a href="/bill" class="link-accent">View bills →</a>
+</div>
 
 <div class="grid kpi-grid">
   <% kpis.forEach(k => { %>

@@ -3,27 +3,48 @@
 <div class="auth-split">
   <section class="auth-hero">
     <div class="auth-hero-brand">
-      <span class="brand-mark">27</span>
-      <span><%= brand.name %></span>
+      <span class="wordmark">27<span class="accent">East</span></span>
     </div>
+
+    <div class="auth-hero-glyph" aria-hidden="true">
+      <!-- Tower glyph: 4 flats x 15 visible floors, brass-lit windows -->
+      <svg viewBox="0 0 200 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="70" y="10" width="60" height="240" stroke="rgba(250,249,244,.4)"/>
+        <rect x="70" y="10" width="60" height="240" fill="url(#towerGrad)"/>
+        <defs>
+          <linearGradient id="towerGrad" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#b6934f" stop-opacity=".5"/>
+            <stop offset="1" stop-color="#b6934f" stop-opacity=".05"/>
+          </linearGradient>
+        </defs>
+        <% for (let r = 0; r < 15; r++) { for (let c = 0; c < 4; c++) { %>
+          <rect x="<%= 75 + c * 13 %>" y="<%= 16 + r * 15 %>" width="9" height="9"
+            fill="<%= (r + c) % 5 === 0 ? 'rgba(182,147,79,.9)' : 'rgba(250,249,244,.15)' %>"/>
+        <% } } %>
+        <line x1="55" y1="250" x2="145" y2="250" stroke="rgba(250,249,244,.4)"/>
+      </svg>
+    </div>
+
     <div class="auth-hero-body">
-      <div class="eyebrow">Private Community Portal</div>
       <h2>Welcome home.</h2>
-      <p>Everything about your community, in one place. Notices, maintenance, helpdesk and more — for the residents of <%= brand.name %>.</p>
+      <p>Everything about your community, in one quiet place. Bills, notices, helpdesk and neighbours — <%= brand.name %>, sign in to continue.</p>
+      <div class="auth-hero-foot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        Private access · No public sign-up
+      </div>
     </div>
-    <div class="auth-hero-foot">Private access for authorized <%= brand.name %> residents. No public account creation.</div>
   </section>
 
   <section class="auth-side">
     <div class="auth-panel">
-      <div class="auth-brand">
-        <span class="brand-mark">27</span>
-        <span><%= brand.name %></span>
+      <div class="auth-brand" style="align-items:flex-start; text-align:left;">
+        <span class="wordmark">27<span class="accent">East</span></span>
+        <span class="wordmark-tagline">Private Community Portal</span>
       </div>
 
-      <div class="auth-welcome">
+      <div class="auth-welcome" style="margin-top:28px;">
         <h1>Sign in</h1>
-        <p>Sign in to your residential community.</p>
+        <p>Enter your credentials to access the portal.</p>
       </div>
 
       <% if (typeof error !== 'undefined' && error) { %>
@@ -33,11 +54,14 @@
       <form class="auth-form" action="/login" method="POST">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="form-field">
-          <label class="label" for="email">Email / Username</label>
+          <label class="label" for="email">Email</label>
           <input class="input" name="username" id="email" type="email" placeholder="you@example.com" autocomplete="username" required autofocus>
         </div>
         <div class="form-field">
-          <label class="label" for="password">Password</label>
+          <div class="row-between" style="margin-bottom:6px;">
+            <label class="label" for="password" style="margin:0;">Password</label>
+            <a href="/forgot-password" class="caption">Forgot password?</a>
+          </div>
           <div class="input-group">
             <input class="input" name="password" id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required style="padding-right:42px;">
             <button type="button" class="toggle-pw" aria-label="Show password" onclick="(function(){var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';})()">
@@ -45,14 +69,13 @@
             </button>
           </div>
         </div>
-        <div class="auth-row">
-          <span></span>
-          <a href="/forgot-password">Forgot password?</a>
-        </div>
         <button class="btn btn-primary btn-lg btn-block" type="submit">Sign in</button>
       </form>
 
-      <div class="auth-foot"><%= brand.tagline %></div>
+      <div class="auth-foot" style="border-top:1px solid var(--border); padding-top:20px;">
+        Private access for authorized <%= brand.name %> residents.<br>
+        Accounts are created only by the building administrator.
+      </div>
     </div>
   </section>
 </div>

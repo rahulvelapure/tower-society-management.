@@ -3,6 +3,7 @@ const router = express.Router();
 const user_collection = require("../models/userModel");
 const society_collection = require("../models/societyModel");
 const unit_collection = require("../models/unitModel");
+const date = require("../date/date");
 const { ensureAuthenticated, ensureApproved, ensureAdmin } = require("../middleware/auth");
 
 function recentNotices(society, limit = 5) {
@@ -33,16 +34,33 @@ router.get("/home", ensureAuthenticated, async (req, res) => {
             const occupied = units.filter(u => u.occupancyStatus && u.occupancyStatus !== 'vacant').length;
             const vacant = totalFlats - occupied;
 
-            const [residentsCount, pendingActivations, complaintDocs] = await Promise.all([
+            const [residentsCount, pendingActivations, memberDocs] = await Promise.all([
                 user_collection.User.countDocuments({ ...societyFilter, isAdmin: false }),
                 user_collection.User.countDocuments({ ...societyFilter, accountStatus: 'invited' }),
-                user_collection.User.find(societyFilter, { complaints: 1 })
+                user_collection.User.find({ ...societyFilter, validation: 'approved' }, { complaints: 1, lastPayment: 1, createdAt: 1 })
             ]);
-            const openComplaints = complaintDocs.reduce((sum, u) =>
+            const openComplaints = memberDocs.reduce((sum, u) =>
                 sum + ((u.complaints || []).filter(c => c && c.status === 'open').length), 0);
 
+            // Outstanding dues across all approved members, using the same
+            // monthDiff-based calculation the bill page applies per resident.
+            const bill = society ? (society.maintenanceBill.toObject ? society.maintenanceBill.toObject() : society.maintenanceBill) : {};
+            const monthlyTotal = Object.values(bill).filter(v => typeof v === 'number').reduce((s, v) => s + v, 0);
+            const dateToday = new Date();
+            let outstandingTotal = 0;
+            memberDocs.forEach(m => {
+                let totalMonth = 0;
+                if (m.lastPayment && m.lastPayment.date) totalMonth = date.monthDiff(m.lastPayment.date, dateToday);
+                else totalMonth = date.monthDiff(m.createdAt, dateToday) + 1;
+                let credit = 0, due = 0;
+                if (totalMonth === 0) credit = monthlyTotal;
+                else if (totalMonth > 1) due = (totalMonth - 1) * monthlyTotal;
+                const amount = monthlyTotal + due - credit;
+                if (amount > 0) outstandingTotal += amount;
+            });
+
             return res.render("dashboard", {
-                stats: { totalFlats, occupied, vacant, residentsCount, pendingActivations, openComplaints },
+                stats: { totalFlats, occupied, vacant, residentsCount, pendingActivations, openComplaints, outstandingTotal },
                 notices: recentNotices(society),
                 flatMasterReady: totalFlats > 0
             });

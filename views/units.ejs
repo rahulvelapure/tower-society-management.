@@ -3,8 +3,8 @@
 
 <div class="page-header">
   <div>
-    <h1 class="page-title">Flats</h1>
-    <div class="sub"><%= stats.initialized %> of <%= stats.total %> flats initialized · <%= stats.occupied %> occupied</div>
+    <h1 class="page-title">The tower</h1>
+    <div class="sub">112 residential flats across 28 floors. Floor 29 hosts the gym and party hall, floor 30 the terrace.</div>
   </div>
   <div class="flex gap-2 wrap">
     <a href="/units/new" class="btn btn-ghost">Add unit</a>
@@ -14,27 +14,20 @@
   </div>
 </div>
 
-<form class="card card-pad no-print" method="GET" action="/units" style="margin-bottom:20px;">
-  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); align-items:end;">
-    <div class="form-field" style="margin:0;">
-      <label class="label">Search flat</label>
-      <input class="input" type="text" name="q" value="<%= q %>" placeholder="e.g. 1302" inputmode="numeric">
-    </div>
-    <div class="form-field" style="margin:0;">
-      <label class="label">Occupancy</label>
-      <select class="input" name="occupancy">
-        <option value="">All</option>
-        <option value="owner-occupied" <%= occupancy === 'owner-occupied' ? 'selected' : '' %>>Owner occupied</option>
-        <option value="tenant-occupied" <%= occupancy === 'tenant-occupied' ? 'selected' : '' %>>Tenant occupied</option>
-        <option value="vacant" <%= occupancy === 'vacant' ? 'selected' : '' %>>Vacant</option>
-      </select>
-    </div>
-    <div class="flex gap-2">
-      <button class="btn btn-primary" type="submit">Filter</button>
-      <a class="btn btn-ghost" href="/units">Reset</a>
-    </div>
+<div class="row-between wrap no-print" style="margin-bottom:20px; gap:12px;">
+  <form method="GET" action="/units" class="flex gap-2" style="flex:1; max-width:320px;">
+    <% if (occupancy) { %><input type="hidden" name="occupancy" value="<%= occupancy %>"><% } %>
+    <input class="input" type="text" name="q" value="<%= q %>" placeholder="Search flat number…" inputmode="numeric">
+    <button class="btn btn-ghost" type="submit">Search</button>
+  </form>
+  <div class="pills">
+    <% const qParam = q ? '&q=' + encodeURIComponent(q) : ''; %>
+    <a class="pill <%= !occupancy ? 'active' : '' %>" href="/units?<%= q ? 'q=' + encodeURIComponent(q) : '' %>">All</a>
+    <a class="pill <%= occupancy === 'vacant' ? 'active' : '' %>" href="/units?occupancy=vacant<%= qParam %>">Vacant</a>
+    <a class="pill <%= occupancy === 'owner-occupied' ? 'active' : '' %>" href="/units?occupancy=owner-occupied<%= qParam %>">Owner occupied</a>
+    <a class="pill <%= occupancy === 'tenant-occupied' ? 'active' : '' %>" href="/units?occupancy=tenant-occupied<%= qParam %>">Tenant occupied</a>
   </div>
-</form>
+</div>
 
 <div class="tower">
   <% if (!filtering) { %>
