@@ -95,22 +95,17 @@
       <table class="table">
         <thead><tr><th>Resident</th><th>Flat</th><th>Status</th><th class="num">Due (₹)</th></tr></thead>
         <tbody>
-          <% societyResidents.forEach((r) => { %>
-            <% function monthDiff(df, dt) { return dt.getMonth() - df.getMonth() + (12 * (dt.getFullYear() - df.getFullYear())); } %>
-            <% const dateToday = new Date(); let totalMonth = 0; let dateFrom = r.createdAt; %>
-            <% if (r.lastPayment.date) { dateFrom = r.lastPayment.date; totalMonth = monthDiff(dateFrom, dateToday); } else { totalMonth = monthDiff(dateFrom, dateToday) + 1; } %>
-            <% let credit = 0, due = 0; %>
-            <% if (totalMonth == 0) { credit = monthlyTotal; } else if (totalMonth > 1) { due = (totalMonth - 1) * monthlyTotal; } %>
-            <% const rTotal = monthlyTotal + due - credit; %>
+          <%# Rows are precomputed in routes/bill.js via the shared lib/billing helper %>
+          <% adminRows.forEach((r) => { %>
             <tr>
-              <td class="cell-strong"><%= r.firstName %> <%= r.lastName %></td>
+              <td class="cell-strong"><%= r.name %></td>
               <td class="mono"><%= r.flatNumber %></td>
               <td>
-                <% if (rTotal <= 0) { %><span class="badge badge-success"><span class="dot"></span>Paid</span>
-                <% } else if (due > 0) { %><span class="badge badge-danger"><span class="dot"></span>Overdue</span>
+                <% if (r.status === 'paid') { %><span class="badge badge-success"><span class="dot"></span>Paid</span>
+                <% } else if (r.status === 'overdue') { %><span class="badge badge-danger"><span class="dot"></span>Overdue</span>
                 <% } else { %><span class="badge badge-warning"><span class="dot"></span>Due</span><% } %>
               </td>
-              <td class="num mono"><%= rTotal %></td>
+              <td class="num mono"><%= r.due %></td>
             </tr>
           <% }) %>
         </tbody>

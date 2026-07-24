@@ -1,4 +1,16 @@
+// A deactivated account must lose access IMMEDIATELY, not at its next login -
+// otherwise a member deactivated by the admin keeps a working session for up to
+// 24h. Every guard below ends such sessions on the spot.
+function rejectInactive(req, res) {
+    if (req.isAuthenticated() && req.user.accountStatus === 'inactive') {
+        req.logout(() => res.redirect("/login?error=inactive"));
+        return true;
+    }
+    return false;
+}
+
 exports.ensureAuthenticated = (req, res, next) => {
+    if (rejectInactive(req, res)) return;
     if (req.isAuthenticated()) {
         return next();
     }
@@ -6,6 +18,7 @@ exports.ensureAuthenticated = (req, res, next) => {
 };
 
 exports.ensureApproved = (req, res, next) => {
+    if (rejectInactive(req, res)) return;
     if (req.isAuthenticated() && req.user.validation == 'approved') {
         return next();
     }
@@ -13,6 +26,7 @@ exports.ensureApproved = (req, res, next) => {
 };
 
 exports.ensureAdmin = (req, res, next) => {
+    if (rejectInactive(req, res)) return;
     if (req.isAuthenticated() && req.user.isAdmin) {
         return next();
     }

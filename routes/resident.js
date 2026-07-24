@@ -3,7 +3,7 @@ const router = express.Router();
 const user_collection = require("../models/userModel");
 const society_collection = require("../models/societyModel");
 const unit_collection = require("../models/unitModel");
-const date = require("../date/date");
+const billing = require("../lib/billing");
 const { ensureAuthenticated, ensureApproved, ensureAdmin } = require("../middleware/auth");
 
 function recentNotices(society, limit = 5) {
@@ -42,21 +42,13 @@ router.get("/home", ensureAuthenticated, async (req, res) => {
             const openComplaints = memberDocs.reduce((sum, u) =>
                 sum + ((u.complaints || []).filter(c => c && c.status === 'open').length), 0);
 
-            // Outstanding dues across all approved members, using the same
-            // monthDiff-based calculation the bill page applies per resident.
-            const bill = society ? (society.maintenanceBill.toObject ? society.maintenanceBill.toObject() : society.maintenanceBill) : {};
-            const monthlyTotal = Object.values(bill).filter(v => typeof v === 'number').reduce((s, v) => s + v, 0);
-            const dateToday = new Date();
+            // Outstanding dues across all approved members - shared helper, so
+            // this figure always matches the bill page and Flat 360.
+            const monthlyTotal = billing.computeMonthlyTotal(society);
             let outstandingTotal = 0;
             memberDocs.forEach(m => {
-                let totalMonth = 0;
-                if (m.lastPayment && m.lastPayment.date) totalMonth = date.monthDiff(m.lastPayment.date, dateToday);
-                else totalMonth = date.monthDiff(m.createdAt, dateToday) + 1;
-                let credit = 0, due = 0;
-                if (totalMonth === 0) credit = monthlyTotal;
-                else if (totalMonth > 1) due = (totalMonth - 1) * monthlyTotal;
-                const amount = monthlyTotal + due - credit;
-                if (amount > 0) outstandingTotal += amount;
+                const dues = billing.computeDues(m, monthlyTotal);
+                if (dues.totalAmount > 0) outstandingTotal += dues.totalAmount;
             });
 
             return res.render("dashboard", {
@@ -158,19 +150,26 @@ router.get("/editProfile", ensureApproved, (req, res) => {
         });
 });
 
-router.post("/editProfile", ensureAuthenticated, (req, res) => {
-    user_collection.User.updateOne(
-        { _id: req.user.id },
-        { $set: {
-            firstName: req.body.firstName,
-            lastName: req.body.lastName,
-            phoneNumber: req.body.phoneNumber,
-            flatNumber: req.body.flatNumber
-        }}
-    )
+router.post("/editProfile", ensureApproved, (req, res) => {
+    // Only ever updates the signed-in user's own record (keyed by req.user.id).
+    const updates = {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        phoneNumber: req.body.phoneNumber
+    };
+    // Flat assignment is canonical (Unit master, managed by the admin via
+    // Member Management). A resident must not be able to relabel their own
+    // flat through this form; only the admin's own profile may adjust it.
+    if (req.user.isAdmin && req.body.flatNumber) {
+        updates.flatNumber = req.body.flatNumber;
+    }
+
+    user_collection.User.updateOne({ _id: req.user.id }, { $set: updates })
         .then(() => {
-            // Update society data if any ~admin
-            if (req.body.address) {
+            // Update society data if any ~admin (guarded server-side: the query
+            // matches on admin: req.user.username, so a resident POSTing an
+            // address field cannot alter the society record)
+            if (req.body.address && req.user.isAdmin) {
                 return society_collection.Society.updateOne(
                     { admin: req.user.username },
                     { $set: {

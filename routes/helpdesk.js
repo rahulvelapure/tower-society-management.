@@ -61,14 +61,25 @@ router.post("/complaint", ensureApproved, (req, res) => {
 });
 
 router.post("/closeTicket", ensureAdmin, (req, res) => {
+    // Guard malformed/tampered payloads: ticket must be an object with one
+    // user-id key and a numeric complaint index that actually exists.
+    if (!req.body.ticket || typeof req.body.ticket !== 'object') {
+        return res.redirect("/helpdesk");
+    }
     const user_id = Object.keys(req.body.ticket)[0];
-    const ticket_index = Object.values(req.body.ticket)[0];
+    const ticket_index = parseInt(Object.values(req.body.ticket)[0], 10);
+    if (!user_id || !Number.isInteger(ticket_index) || ticket_index < 0) {
+        return res.redirect("/helpdesk");
+    }
     const ticket = 'complaints.' + ticket_index;
 
     // Find user for fetching ticket data
     user_collection.User.findById(user_id)
         .then(foundUser => {
             if (foundUser) {
+                if (!foundUser.complaints || !foundUser.complaints[ticket_index]) {
+                    return res.redirect("/helpdesk");
+                }
                 return user_collection.User.updateOne(
                     { _id: user_id },
                     { $set: {

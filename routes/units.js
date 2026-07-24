@@ -3,7 +3,7 @@ const router = express.Router();
 const unit_collection = require("../models/unitModel");
 const society_collection = require("../models/societyModel");
 const user_collection = require("../models/userModel");
-const date = require("../date/date");
+const billing = require("../lib/billing");
 const { ensureAdmin } = require("../middleware/auth");
 
 // Resolve the logged-in admin's society ObjectId, falling back to a lookup by
@@ -217,28 +217,17 @@ router.get("/units/:id", ensureAdmin, async (req, res) => {
         const society = await society_collection.Society.findById(unit.society);
         const members = await user_collection.User.find({ unit: unit._id });
 
-        // Monthly maintenance total (same calc the bill page uses)
-        const monthlyTotal = society ? Object.values(society.maintenanceBill.toObject ? society.maintenanceBill.toObject() : society.maintenanceBill)
-            .filter(v => typeof v === 'number')
-            .reduce((s, v) => s + v, 0) : 0;
-
-        // Per-member outstanding using the existing monthDiff convention from routes/bill.js
-        const dateToday = new Date();
+        // Financial position via the shared billing helper (same numbers as the
+        // bill page and dashboard - one source of truth).
+        const monthlyTotal = billing.computeMonthlyTotal(society);
         let outstanding = 0;
         let lastPayment = null;
         const openComplaints = [];
         members.forEach(m => {
-            let totalMonth = 0;
             if (m.lastPayment && m.lastPayment.date) {
-                totalMonth = date.monthDiff(m.lastPayment.date, dateToday);
                 if (!lastPayment || m.lastPayment.date > lastPayment.date) lastPayment = m.lastPayment;
-            } else {
-                totalMonth = date.monthDiff(m.createdAt, dateToday) + 1;
             }
-            let credit = 0, due = 0;
-            if (totalMonth === 0) credit = monthlyTotal;
-            else if (totalMonth > 1) due = (totalMonth - 1) * monthlyTotal;
-            outstanding += monthlyTotal + due - credit;
+            outstanding += billing.computeDues(m, monthlyTotal).totalAmount;
             (m.complaints || []).forEach(c => {
                 if (c && c.status === 'open') openComplaints.push({ ...c, by: `${m.firstName} ${m.lastName}` });
             });
