@@ -38,9 +38,16 @@ const userSchema = new mongoose.Schema (
 			type: String,
 			required: true
 		},
+		// String, not Number: real phone numbers carry +country codes, spaces,
+		// hyphens and leading zeros, none of which survive a Number cast. (A
+		// Number type here made every formatted phone entry fail user.save()
+		// with a CastError -> 500 on member creation.) Existing numeric values
+		// in the database are cast to strings on read, so this is backward
+		// compatible with all pre-existing accounts.
 		phoneNumber: {
-			type: Number,
-			required: true
+			type: String,
+			required: true,
+			trim: true
 		},
 		// How this person relates to their flat. A single Unit can have multiple
 		// User accounts (owner + tenant + family), each with their own occupancyType.

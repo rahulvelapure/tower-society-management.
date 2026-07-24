@@ -29,11 +29,42 @@
         <input class="input" name="<%= name %>" id="<%= name %>" type="tel" value="<%= contact[name] === 'Not added by admin' ? '' : contact[name] %>" placeholder="Phone number" <%= i === 0 ? 'autofocus' : '' %>>
       </div>
     <% }) %>
+
+    <div class="fieldset-title">Custom contacts</div>
+    <p class="caption" style="margin:-4px 0 12px;">Add any other emergency or useful contacts — e.g. Hospital, Lift Service, Electrician, Management Office. Rows left empty are removed on save.</p>
+
+    <div id="extraContacts">
+      <% (extraContacts || []).forEach(extra => { %>
+        <div class="grid extra-row" style="grid-template-columns: 1fr 1fr auto; margin-bottom:10px; align-items:center;">
+          <input class="input" name="extraName" type="text" value="<%= extra.name %>" placeholder="Contact name (e.g. Hospital)">
+          <input class="input" name="extraPhone" type="tel" value="<%= extra.phone %>" placeholder="Phone number">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.extra-row').remove()" aria-label="Remove contact">✕</button>
+        </div>
+      <% }) %>
+    </div>
+
+    <button type="button" class="btn btn-ghost btn-sm" onclick="addContactRow()">+ Add contact</button>
+
     <div class="flex gap-3 mt-4">
       <button type="submit" class="btn btn-primary">Save contacts</button>
       <a href="/contacts" class="btn btn-ghost">Cancel</a>
     </div>
   </form>
 </div>
+
+<script>
+  function addContactRow() {
+    var wrap = document.getElementById('extraContacts');
+    var row = document.createElement('div');
+    row.className = 'grid extra-row';
+    row.style.cssText = 'grid-template-columns: 1fr 1fr auto; margin-bottom:10px; align-items:center;';
+    row.innerHTML =
+      '<input class="input" name="extraName" type="text" placeholder="Contact name (e.g. Hospital)">' +
+      '<input class="input" name="extraPhone" type="tel" placeholder="Phone number">' +
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="this.closest(\'.extra-row\').remove()" aria-label="Remove contact">✕</button>';
+    wrap.appendChild(row);
+    row.querySelector('input').focus();
+  }
+</script>
 
 <%- include('partials/appFoot') %>

@@ -60,6 +60,15 @@ const societySchema = mongoose.Schema(
                 default: 'Not added by admin'
             }
         },
+        // Admin-defined emergency/useful contacts beyond the predefined set above
+        // (e.g. Lift Service, Hospital, Electrician, Management Office). The legacy
+        // fixed `emergencyContacts` fields are kept as-is for backward compatibility.
+        extraContacts: [
+            {
+                name: { type: String, trim: true },
+                phone: { type: String, trim: true }
+            }
+        ],
         maintenanceBill: {
             societyCharges: {
                 type: Number,

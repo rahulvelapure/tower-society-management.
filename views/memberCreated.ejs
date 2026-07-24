@@ -13,6 +13,12 @@
   Account created for <strong><%= member.firstName %> <%= member.lastName %></strong><% if (unit) { %> · Floor <%= unit.floor %>, Flat <%= unit.flatNumber %><% } %>.
 </div>
 
+<% if (typeof emailFailed !== 'undefined' && emailFailed) { %>
+  <div class="flash flash-error" style="max-width:720px;">
+    The member was created, but the invitation email could not be sent. Share the activation link below with the resident directly.
+  </div>
+<% } %>
+
 <div class="card card-pad" style="max-width:720px;">
   <div class="section-title">Activation link</div>
   <p class="text-muted" style="margin-top:6px;">
