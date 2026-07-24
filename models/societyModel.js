@@ -92,4 +92,12 @@ const societySchema = mongoose.Schema(
 	}
 )
 
-exports.Society = mongoose.model("society", societySchema);
+const Society = mongoose.model("society", societySchema);
+
+// This deployment represents ONE fixed tower (27 East), so there is exactly one
+// Society document. Resolve it safely on the server rather than trusting any
+// client-supplied society name. If more than one somehow exists, prefer the
+// oldest (the originally-registered tower) deterministically.
+exports.getConfiguredSociety = () => Society.findOne().sort({ createdAt: 1 });
+
+exports.Society = Society;

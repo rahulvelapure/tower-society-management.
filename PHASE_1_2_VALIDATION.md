@@ -16,9 +16,11 @@ mongodump --uri "<your MONGO_URI>" --out .\backup-before-migration
 
 ## 1. Authentication
 
-- [ ] Register a new society (admin) - `/register`
-- [ ] Log out, log back in as that admin
-- [ ] Sign up a second account (resident) against that society - `/signup`
+- [ ] Confirm society registration is disabled: `GET /register` redirects to `/login`, and a direct `POST /register` returns 403 and creates nothing (single fixed tower - 27 East already registered)
+- [ ] Log in as the existing 27 East administrator
+- [ ] Confirm the landing page (`/`) and login page show only LOGIN / SIGN UP (no REGISTER)
+- [ ] Sign up a resident via `/signup` - confirm there is **no** society field, the society name (27 East) is shown read-only, and the flat is chosen from a dropdown of canonical flats (not a free-text box). Requires the 112-flat master to be initialized first (section 4)
+- [ ] Confirm you cannot register against a non-existent flat: tampering `unitId` to a bogus/valid-looking ObjectId is rejected server-side
 - [ ] Log out, log back in as the resident
 - [ ] Attempt login with wrong password - see `/loginFailure` with the correct message
 - [ ] Forgot password: submit `/forgot-password` for the resident's email - confirm the generic message appears regardless of whether you also try a non-existent email

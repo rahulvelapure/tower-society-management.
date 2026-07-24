@@ -19,12 +19,12 @@ Generated from the actual guards in `routes/*.js` and `server.js` after the Phas
 | POST | `/login` | No | N/A | N/A | public, rate-limited (20/15min/IP) | N/A | Yes | passport-local-mongoose (credential check) |
 | GET | `/loginFailure` | No | N/A | N/A | public | N/A | N/A (GET) | N/A |
 | GET | `/logout` | No* | N/A | N/A | public | N/A | N/A (GET) | N/A |
-| GET | `/signup` | No | N/A | N/A | public | N/A | N/A (GET) | N/A |
-| POST | `/signup` | No | N/A | N/A | public | N/A | Yes | Partial - required fields via schema; no email format/password strength check (existing gap) |
-| GET | `/register` | No | N/A | N/A | public | N/A | N/A (GET) | N/A |
-| POST | `/register` | No | N/A | N/A | public (creates a new admin+society) | N/A | Yes | Partial - same as `/signup` (existing gap) |
-| GET | `/newRequest` | Yes | Must be **not** approved | No | own pending signup only | Own account (`req.user`) | N/A (GET) | N/A |
-| POST | `/newRequest` | Yes | No (intentional - lets pending users edit their request) | No | own pending signup only | Own account (`req.user.id`) | Yes | Society must exist; no field-level validation (existing gap) |
+| GET | `/signup` | No | N/A | N/A | public | N/A | N/A (GET) | Renders the single configured society (27 East) + its canonical flats; no society/flat free-text |
+| POST | `/signup` | No | N/A | N/A | public | N/A | Yes | Society resolved server-side (never from client); flat must be a valid canonical `Unit` of that society (`unitId` validated as ObjectId + ownership) - blocks arbitrary/typed flats |
+| GET | `/register` | No | N/A | N/A | **disabled** - redirects to `/login` | N/A | N/A (GET) | Society registration is disabled (single fixed tower) |
+| POST | `/register` | No | N/A | N/A | **disabled** - returns 403, creates nothing | N/A | N/A (blocked before any write) | Hard backend block so no additional society can be created even by direct POST |
+| GET | `/newRequest` | Yes | Must be **not** approved | No | own pending signup only | Own account (`req.user`) | N/A (GET) | Renders single society + canonical flats |
+| POST | `/newRequest` | Yes | No (intentional - lets pending users edit their request) | No | own pending signup only | Own account (`req.user.id`) | Yes | Society resolved server-side; flat must be a valid canonical `Unit` (`unitId` validated) |
 | GET | `/forgot-password` | No | N/A | N/A | public, rate-limited on POST | N/A | N/A (GET) | N/A |
 | POST | `/forgot-password` | No | N/A | N/A | public, rate-limited (5/15min/IP) | N/A | Yes | Generic response regardless of match (anti-enumeration) |
 | GET | `/reset-password/:token` | No | N/A | N/A | public - requires valid, unexpired hashed token | N/A | N/A (GET) | Token existence + expiry checked |
