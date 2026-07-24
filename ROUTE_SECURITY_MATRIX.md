@@ -109,6 +109,26 @@ No DELETE route exists for `Unit` in this pass, so "deleting a unit with linked 
 
 Members are created only by an administrator — there is **no** public account creation anywhere in the app. Activation links are shown to the admin (one-time, in-UI) and emailed when SMTP is configured; the raw token is never written to logs.
 
+## `routes/admins.js` (SUPERADMIN-only role administration)
+
+| Method | Route | Auth Required | Admin Required | Superadmin Required | Ownership/Target Checks | CSRF | Notes |
+|---|---|---|---|---|---|---|---|
+| GET | `/admins` | Yes | — | **Yes** | N/A | N/A (GET) | Administrator list + promotable members |
+| POST | `/admins/:id/promote` | Yes | — | **Yes** | Target must be an active `member` | Yes | member → admin; audited (`ADMIN_PROMOTED`) |
+| POST | `/admins/:id/demote` | Yes | — | **Yes** | Target must be `admin`; **superadmins untargetable**; last-superadmin count guard | Yes | admin → member; audited |
+| POST | `/admins/:id/status` | Yes | — | **Yes** | Target must be `admin`; not self; **superadmins untargetable** | Yes | deactivate/reactivate; audited |
+
+Admins cannot reach these routes (`ensureSuperAdmin`); no route anywhere can create a superadmin or modify one — the protected superadmin cannot be demoted/deactivated/deleted through the application.
+
+## `POST /webhooks/stripe` (Stripe signed webhook)
+
+| Property | Value |
+|---|---|
+| Authentication | Stripe signature over the RAW body (`constructEvent` + `STRIPE_WEBHOOK_SECRET`) — unsigned/tampered payloads rejected 400 |
+| CSRF | Exempt **by construction**: mounted before session/CSRF middleware; authenticates via signature, not browser session. Global CSRF unchanged for every other route |
+| Idempotency | Unique `StripeEvent.eventId` + unique `Payment {provider, providerRef}` — replayed events/sessions can never double-record |
+| Unconfigured | `STRIPE_WEBHOOK_SECRET` unset → 503, no processing |
+
 ## Cross-cutting notes
 
 - **CSRF**: implemented in this pass via `middleware/csrf.js` (session-bound token, double-submit style - not the deprecated `csurf` package). Every form listed above as "Yes" was verified to carry the `_csrf` hidden field; the one non-form state-changing call (`/checkout-session`, invoked via `fetch()` in `bill.ejs`) sends the token as a `CSRF-Token` header instead.

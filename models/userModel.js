@@ -9,6 +9,20 @@ const userSchema = new mongoose.Schema (
 			required: true,
 			default: 'applied'
 		},
+		// AUTHORITATIVE role. 'superadmin' = protected system owner (exactly one
+		// initially - the pre-existing administrator account, assigned by
+		// scripts/migrateRoles.js, never by email matching); 'admin' = individual
+		// named operational administrators; 'member' = resident.
+		role: {
+			type: String,
+			enum: ['superadmin', 'admin', 'member']
+			// intentionally no default: legacy docs without a role are resolved
+			// by lib/roles.js effectiveRole() until the migration script runs
+		},
+		// LEGACY compatibility flag, kept synchronized from `role` by the
+		// pre-save hook below. Views and older checks read this; middleware
+		// authorization uses `role` (via lib/roles.js). Do not set directly
+		// when `role` is present.
 		isAdmin: {
 			type: Boolean,
 			required: true,
@@ -84,6 +98,15 @@ const userSchema = new mongoose.Schema (
 		timestamps: true
 	}
 );
+
+// Keep the legacy isAdmin flag in lockstep with the authoritative role so
+// every existing view/check continues to work during the transition.
+userSchema.pre('save', function (next) {
+	if (this.role) {
+		this.isAdmin = this.role !== 'member';
+	}
+	next();
+});
 
 userSchema.plugin(passportLocalMongoose);
 const User = mongoose.model("User",userSchema);

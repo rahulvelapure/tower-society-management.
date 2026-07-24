@@ -8,6 +8,16 @@
   else statusBadge = '<span class="badge badge-warning"><span class="dot"></span>Due</span>';
 %>
 
+<% if (typeof paymentNotice !== 'undefined' && paymentNotice) { %>
+  <% if (paymentNotice === 'cancelled') { %>
+    <div class="flash flash-info no-print">Payment cancelled — no charge was made.</div>
+  <% } else if (paymentNotice === 'pending') { %>
+    <div class="flash flash-info no-print">That payment hasn't been completed. If you finished paying, it will be confirmed shortly — refresh in a moment.</div>
+  <% } else if (paymentNotice === 'invalid') { %>
+    <div class="flash flash-error no-print">We couldn't verify that payment reference. If you believe you've paid, contact the administrator.</div>
+  <% } %>
+<% } %>
+
 <div class="page-header">
   <div>
     <h1 class="page-title">Maintenance bill</h1>
@@ -122,14 +132,27 @@
   var checkoutButton = document.getElementById("checkout-button");
   if (checkoutButton) {
     checkoutButton.addEventListener("click", function () {
+      checkoutButton.disabled = true;
       fetch("/checkout-session", {
         method: "POST",
         headers: { "CSRF-Token": "<%= csrfToken %>" },
       })
         .then(function (r) { return r.json(); })
-        .then(function (session) { return stripe.redirectToCheckout({ sessionId: session.id }); })
-        .then(function (result) { if (result && result.error) alert(result.error.message); })
-        .catch(function (error) { console.error("Error:", error); });
+        .then(function (session) {
+          if (session && session.error) {
+            alert(session.error);
+            checkoutButton.disabled = false;
+            return;
+          }
+          return stripe.redirectToCheckout({ sessionId: session.id });
+        })
+        .then(function (result) {
+          if (result && result.error) { alert(result.error.message); checkoutButton.disabled = false; }
+        })
+        .catch(function () {
+          alert("Unable to start the payment right now. Please try again.");
+          checkoutButton.disabled = false;
+        });
     });
   }
 

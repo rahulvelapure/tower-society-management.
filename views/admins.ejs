@@ -1,0 +1,78 @@
+<%- include('partials/appHead', { pageTitle: 'Administrators' }) %>
+<%- include('partials/appNav', { active: 'admins', pageTitle: 'Administrators' }) %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Administrators</h1>
+    <div class="sub">Privileged accounts for <%= brand.name %>. Only the superadmin can manage this list.</div>
+  </div>
+</div>
+
+<div class="table-wrap" style="margin-bottom:24px;">
+  <table class="table">
+    <thead><tr><th>Administrator</th><th>Contact</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+    <tbody>
+      <% admins.forEach(a => { %>
+        <% const role = effectiveRole(a); %>
+        <tr>
+          <td>
+            <div class="cell-strong"><%= a.firstName %> <%= a.lastName %></div>
+            <div class="caption"><%= a.username %></div>
+          </td>
+          <td class="mono"><%= a.phoneNumber || '—' %></td>
+          <td>
+            <% if (role === 'superadmin') { %><span class="badge badge-info"><span class="dot"></span>Superadmin</span>
+            <% } else { %><span class="badge badge-muted"><span class="dot"></span>Admin</span><% } %>
+          </td>
+          <td>
+            <% if (a.accountStatus === 'inactive') { %><span class="badge badge-danger">Inactive</span>
+            <% } else if (a.accountStatus === 'invited') { %><span class="badge badge-warning">Invited</span>
+            <% } else { %><span class="badge badge-success">Active</span><% } %>
+          </td>
+          <td class="caption"><%= a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '—' %></td>
+          <td>
+            <% if (role === 'superadmin') { %>
+              <span class="caption">Protected</span>
+            <% } else { %>
+              <div class="flex gap-2 wrap">
+                <form action="/admins/<%= a._id %>/demote" method="POST" style="display:inline;" onsubmit="return confirm('Demote this administrator to member?');">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-ghost btn-sm" type="submit">Demote</button>
+                </form>
+                <form action="/admins/<%= a._id %>/status" method="POST" style="display:inline;" onsubmit="return confirm('<%= a.accountStatus === 'inactive' ? 'Reactivate this administrator?' : 'Deactivate this administrator? They will lose access immediately.' %>');">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input type="hidden" name="action" value="<%= a.accountStatus === 'inactive' ? 'activate' : 'deactivate' %>">
+                  <button class="btn btn-sm <%= a.accountStatus === 'inactive' ? 'btn-ghost' : 'btn-danger' %>" type="submit"><%= a.accountStatus === 'inactive' ? 'Reactivate' : 'Deactivate' %></button>
+                </form>
+              </div>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card card-pad" style="max-width:560px;">
+  <div class="section-title">Promote a member to administrator</div>
+  <p class="caption" style="margin-top:4px;">Administrators are individual named accounts promoted from existing members — there is no public or shared admin creation.</p>
+  <% if (!promotable.length) { %>
+    <p class="text-muted" style="margin-top:12px;">No eligible members to promote yet.</p>
+  <% } else { %>
+    <form action="#" method="POST" style="margin-top:14px;" onsubmit="this.action='/admins/' + document.getElementById('promoteTarget').value + '/promote'; return confirm('Promote this member to administrator?');">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="form-field">
+        <label class="label" for="promoteTarget">Member</label>
+        <select class="input" id="promoteTarget" required>
+          <option value="" disabled selected>Select member</option>
+          <% promotable.forEach(m => { %>
+            <option value="<%= m._id %>"><%= m.firstName %> <%= m.lastName %> · <%= m.flatNumber || '—' %> · <%= m.username %></option>
+          <% }) %>
+        </select>
+      </div>
+      <button class="btn btn-primary" type="submit">Promote to Admin</button>
+    </form>
+  <% } %>
+</div>
+
+<%- include('partials/appFoot') %>

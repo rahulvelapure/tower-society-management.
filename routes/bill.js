@@ -5,6 +5,7 @@ const user_collection = require("../models/userModel");
 const society_collection = require("../models/societyModel");
 const date = require("../date/date");
 const billing = require("../lib/billing");
+const payments = require("../lib/payments");
 const { ensureApproved, ensureAdmin } = require("../middleware/auth");
 
 router.get("/bill", ensureApproved, async (req, res) => {
@@ -50,7 +51,8 @@ router.get("/bill", ensureApproved, async (req, res) => {
             year: date.year,
             receipt: foundUser.lastPayment,
             adminRows,
-            monthlyTotal
+            monthlyTotal,
+            paymentNotice: req.query.payment || null
         });
     } catch (err) {
         console.error(err);
@@ -97,77 +99,97 @@ router.post("/editBill", ensureAdmin, (req, res) => {
         });
 });
 
+// Base URL for Stripe redirect targets. Prefer the explicit APP_BASE_URL env
+// (deployment-aware, immune to host-header games); fall back to the request
+// host, which is safe here because trust proxy is pinned to 1 hop (Render).
+function appBaseUrl(req) {
+    const configured = (process.env.APP_BASE_URL || '').trim().replace(/\/+$/, '');
+    if (configured) return configured;
+    return `${req.protocol}://${req.get('host')}`;
+}
+
+function stripeConfigured() {
+    return Boolean(process.env.SECRET_KEY);
+}
+
 router.post('/checkout-session', ensureApproved, async (req, res) => {
     try {
-        // Amount comes ONLY from the server-computed value persisted by /bill.
-        const amount = Number(req.user.makePayment);
-        if (!Number.isFinite(amount) || amount <= 0) {
-            return res.status(400).json({ error: "Nothing payable. Open your bill first." });
+        if (!stripeConfigured()) {
+            return res.status(503).json({ error: "Online payments are not configured yet. Please contact the administrator." });
         }
 
-        // Success/cancel URLs derive from the actual request host (behind
-        // Render's proxy via trust proxy) - never a hardcoded domain.
-        const base = `${req.protocol}://${req.get('host')}`;
+        // Amount comes ONLY from the server-computed value persisted by /bill -
+        // req.body is never consulted for the amount.
+        const amount = Number(req.user.makePayment);
+        if (!Number.isFinite(amount) || amount <= 0) {
+            return res.status(400).json({ error: "Nothing payable right now. Open your bill page first." });
+        }
 
+        const base = appBaseUrl(req);
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            // Ties the Checkout session to this account so /success can verify
-            // the payer is recording their own payment, not replaying another's.
+            // Ties the Checkout session to this account so confirmation can
+            // verify the payer is recording their own payment.
             client_reference_id: String(req.user.id),
             line_items: [
                 {
                     price_data: {
                         currency: 'inr',
                         product_data: { name: req.user.societyName },
-                        unit_amount: Math.round(amount * 100),
+                        unit_amount: Math.round(amount * 100), // integer paise
                     },
                     quantity: 1,
                 },
             ],
             mode: 'payment',
             success_url: `${base}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${base}/bill`,
+            cancel_url: `${base}/bill?payment=cancelled`,
         });
 
         res.json({ id: session.id });
     } catch (err) {
         console.error("Stripe checkout-session failed:", err.message);
-        res.status(500).json({ error: "Unable to start the payment. Please try again." });
+        res.status(502).json({ error: "Unable to start the payment right now. Please try again in a moment." });
     }
 });
 
 router.get('/success', ensureApproved, async (req, res) => {
     try {
-        if (!req.query.session_id) return res.redirect("/bill");
+        if (!stripeConfigured() || !req.query.session_id) return res.redirect("/bill");
 
-        const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+        let session;
+        try {
+            session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+        } catch (stripeErr) {
+            // Invalid/garbage session id -> friendly redirect, never a 500.
+            console.warn(`Invalid session id on /success: ${stripeErr.message}`);
+            return res.redirect("/bill?payment=invalid");
+        }
 
-        // Only a session Stripe confirms as PAID may record a payment - a
-        // created-but-unpaid or canceled session id must not clear dues.
+        // Only a session Stripe confirms as PAID may show/record a payment.
         if (!session || session.payment_status !== 'paid') {
             console.warn(`Rejected /success for session ${req.query.session_id}: payment_status=${session && session.payment_status}`);
-            return res.redirect("/bill");
+            return res.redirect("/bill?payment=pending");
         }
         // The session must belong to the signed-in account (set at creation).
         if (session.client_reference_id && session.client_reference_id !== String(req.user.id)) {
             console.warn(`Rejected /success: session ${session.id} belongs to ${session.client_reference_id}, requested by ${req.user.id}`);
-            return res.redirect("/bill");
+            return res.redirect("/bill?payment=invalid");
+        }
+        if (session.currency && session.currency !== 'inr') {
+            console.warn(`Rejected /success: unexpected currency ${session.currency} on ${session.id}`);
+            return res.redirect("/bill?payment=invalid");
         }
 
-        const customer = await stripe.customers.retrieve(session.customer);
+        // Shared idempotent recorder (same one the webhook uses): exactly one
+        // Payment row + one legacy lastPayment effect per session, no matter
+        // how many times this page or the webhook fires.
+        const { payment } = await payments.recordStripePayment(stripe, session);
 
-        const foundUser = await user_collection.User.findOne({ _id: req.user.id });
-        foundUser.lastPayment.date = new Date(customer.created * 1000);
-        foundUser.lastPayment.amount = session.amount_total / 100;
-        foundUser.lastPayment.invoice = customer.invoice_prefix;
-
-        await foundUser.save();
-
-        const transactionDate = new Date(customer.created * 1000).toLocaleString().split(', ')[0];
         res.render("success", {
-            invoice: customer.invoice_prefix,
-            amount: session.amount_total / 100,
-            date: transactionDate
+            invoice: (await user_collection.User.findById(req.user.id)).lastPayment.invoice,
+            amount: payment.amountPaise / 100,
+            date: new Date(payment.paidAt).toLocaleDateString()
         });
     } catch (err) {
         console.error(err);

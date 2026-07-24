@@ -17,6 +17,14 @@ app.set('view engine', 'ejs');
 // keying and for the password-reset email to link to https:// in production.
 app.set('trust proxy', 1);
 app.use(express.static('public'));
+
+// Stripe webhook MUST be mounted before the urlencoded body parser, session and
+// CSRF middleware: signature verification needs the exact RAW request body, and
+// the route authenticates via Stripe's signature (not a browser session), so it
+// is the ONLY route outside CSRF - by construction, not by weakening the global
+// middleware. Registered here so later app.use() layers never touch it.
+app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), require('./routes/stripeWebhook'));
+
 // Middleware to handle HTTP post requests
 app.use(express.urlencoded({ extended: true }));
 app.use(
@@ -59,6 +67,7 @@ app.get("/", (req, res) => res.redirect(req.isAuthenticated() ? "/home" : "/logi
 app.use(require('./routes/auth'));
 app.use(require('./routes/resident'));
 app.use(require('./routes/members'));
+app.use(require('./routes/admins'));
 app.use(require('./routes/notice'));
 app.use(require('./routes/bill'));
 app.use(require('./routes/helpdesk'));

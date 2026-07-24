@@ -25,9 +25,22 @@ exports.ensureApproved = (req, res, next) => {
     res.redirect("/login");
 };
 
+const roles = require('../lib/roles');
+
+// Operational admin: ADMIN or SUPERADMIN (role-based via lib/roles.js; the
+// legacy isAdmin flag is only a fallback for pre-migration documents).
 exports.ensureAdmin = (req, res, next) => {
     if (rejectInactive(req, res)) return;
-    if (req.isAuthenticated() && req.user.isAdmin) {
+    if (req.isAuthenticated() && roles.isAdminRole(req.user)) {
+        return next();
+    }
+    res.redirect("/login");
+};
+
+// Privileged system administration: SUPERADMIN only.
+exports.ensureSuperAdmin = (req, res, next) => {
+    if (rejectInactive(req, res)) return;
+    if (req.isAuthenticated() && roles.isSuperAdmin(req.user)) {
         return next();
     }
     res.redirect("/login");

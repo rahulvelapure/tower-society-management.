@@ -6,6 +6,7 @@ const user_collection = require("../models/userModel");
 const society_collection = require("../models/societyModel");
 const unit_collection = require("../models/unitModel");
 const mailer = require("../config/mailer");
+const roles = require("../lib/roles");
 const { ensureAdmin } = require("../middleware/auth");
 
 function hashToken(token) {
@@ -158,6 +159,7 @@ router.post("/members", ensureAdmin, async (req, res) => {
             unit: unit._id,
             flatNumber: unit.flatNumber,
             occupancyType,
+            role: 'member',
             isAdmin: false,
             validation: 'approved',
             accountStatus: 'invited',
@@ -283,6 +285,9 @@ router.post("/members/:id/status", ensureAdmin, async (req, res) => {
         if (!member) return res.status(404).send("Not found");
         // Guard: an admin can't lock themselves out.
         if (String(member._id) === String(req.user.id)) return res.redirect("/members");
+        // Guard: admin/superadmin accounts are managed only via the superadmin's
+        // /admins routes - never through Member Management.
+        if (roles.isAdminRole(member)) return res.redirect("/members");
 
         if (req.body.action === 'deactivate') {
             member.accountStatus = 'inactive';
