@@ -1,77 +1,42 @@
-<!-- Emergency contacts -->
-<%- include('partials/header') %>
+<%- include('partials/appHead', { pageTitle: 'Emergency' }) %>
+<%- include('partials/appNav', { active: 'emergency', pageTitle: 'Emergency Contacts' }) %>
 
-<div style="padding:4%; padding-top: 0%; font-family:sans-serif; font-size:14px;">
-  <h2 style="background-color:rgb(51, 51, 51); padding:18px;color:white; text-align: center; border-radius: 1rem; font-size: 20px; max-width: 1000px; margin:auto">
-      Emergency Contacts
-  </h2>
-  <% if(isAdmin){ %>
-  <row>
-    <col-4>
-        <a href="/editContacts" class="btn btn-primary btn-md text-uppercase center" style="border-radius:3rem; max-width:150px; display: block; margin: auto; margin-top: 10px;">
-          Edit Contact
-        </a>
-    </col-4>
-  </row>
-  <% } %>
-  <div class="flex-container" style="margin-top: 10px;">
-    <div>
-      <ul class="list-group zoom">
-        <li class="list-group-item flat-number"><i class="fas fa-wrench"></i> Plumbing Service</li>
-        <li class="list-group-item flat-owner">
-          <i class="fas fa-phone-square-alt"></i> <%= contact.plumbingService %>
-        </li>
-      </ul>
-    </div>
-    <div>
-      <ul class="list-group zoom">
-        <li class="list-group-item flat-number"><i class="fas fa-pills"></i> Pharmacy</li>
-        <li class="list-group-item flat-owner">
-          <i class="fas fa-phone-square-alt"></i> <%= contact.medicineShop %>
-        </li>
-      </ul>
-    </div>
-    <div>
-      <ul class="list-group zoom">
-        <li class="list-group-item flat-number"><i class="fas fa-user-md"></i> Doctor</li>
-        <li class="list-group-item flat-owner">
-          <i class="fas fa-phone-square-alt"></i> <%= contact.doctor %>
-        </li>
-      </ul>
-    </div>
-    <div>
-      <ul class="list-group zoom">
-        <li class="list-group-item flat-number"><i class="fas fa-ambulance"></i> Ambulance</li>
-        <li class="list-group-item flat-owner">
-          <i class="fas fa-phone-square-alt"></i> <%= contact.ambulance %>
-        </li>
-      </ul>
-    </div>
-    <div>
-      <ul class="list-group zoom">
-        <li class="list-group-item flat-number"><i class="fas fa-fire-alt"></i> Fire Station</li>
-        <li class="list-group-item flat-owner">
-          <i class="fas fa-phone-square-alt"></i> <%= contact.fireStation %>
-        </li>
-      </ul>
-    </div>
-    <div>
-      <ul class="list-group zoom">
-        <li class="list-group-item flat-number"><i class="fas fa-shield-alt"></i> Police Station</li>
-        <li class="list-group-item flat-owner">
-          <i class="fas fa-phone-square-alt"></i> <%= contact.policeStation %>
-        </li>
-      </ul>
-    </div>
-    <div>
-      <ul class="list-group zoom">
-        <li class="list-group-item flat-number"><i class="fas fa-user-shield"></i> Guard</li>
-        <li class="list-group-item flat-owner">
-          <i class="fas fa-phone-square-alt"></i> <%= contact.guard %>
-        </li>
-      </ul>
-    </div>
+<%
+  function ic(inner){ return "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>"+inner+"</svg>"; }
+  const items = [
+    { key: 'guard',           name: 'Security / Guard', icon: "<path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/>" },
+    { key: 'policeStation',   name: 'Police',           icon: "<path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/><path d='M12 8v4M12 16h.01'/>" },
+    { key: 'ambulance',       name: 'Ambulance',        icon: "<rect x='2' y='7' width='14' height='10' rx='2'/><path d='M16 10h3l3 3v4h-6'/><circle cx='7' cy='19' r='1.6'/><circle cx='18' cy='19' r='1.6'/><path d='M8 10v4M6 12h4'/>" },
+    { key: 'doctor',          name: 'Doctor',           icon: "<path d='M8 3v4a4 4 0 0 0 8 0V3'/><path d='M12 11v4a5 5 0 0 1-10 0'/><circle cx='19' cy='16' r='3'/>" },
+    { key: 'fireStation',     name: 'Fire Brigade',     icon: "<path d='M12 22c4 0 7-2.7 7-7 0-3-2-5.5-3.5-7C14 6.5 13 4.5 13 2c-3 2-5 5-5 8-1-1-1.6-2-2-3.5C4.6 8.6 5 11 5 13c0 5 3 9 7 9z'/>" },
+    { key: 'medicineShop',    name: 'Pharmacy',         icon: "<rect x='3' y='8' width='18' height='13' rx='2'/><path d='M8 8V6a4 4 0 0 1 8 0v2'/><path d='M12 12v5M9.5 14.5h5'/>" },
+    { key: 'plumbingService', name: 'Plumber',          icon: "<path d='M14.7 6.3a5 5 0 0 0-6.9 6.1L2 18.2V22h3.8l5.8-5.8a5 5 0 0 0 6.1-6.9l-3.4 3.4-2.8-.6-.6-2.8 3.8-3z'/>" }
+  ];
+%>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Emergency contacts</h1>
+    <div class="sub">Tap a number to call.</div>
   </div>
+  <% if (isAdmin) { %><a href="/editContacts" class="btn btn-ghost">Edit contacts</a><% } %>
 </div>
-  
-<%- include('partials/footer') %>
+
+<div class="contact-grid">
+  <% items.forEach(item => { %>
+    <% const value = contact[item.key]; const hasNumber = value && value !== 'Not added by admin'; %>
+    <div class="contact-card">
+      <span class="contact-icon"><%- ic(item.icon) %></span>
+      <div>
+        <div class="name"><%= item.name %></div>
+        <% if (hasNumber) { %>
+          <a class="number" href="tel:<%= String(value).replace(/[^+0-9]/g, '') %>"><%= value %></a>
+        <% } else { %>
+          <div class="number text-faint">Not added yet</div>
+        <% } %>
+      </div>
+    </div>
+  <% }) %>
+</div>
+
+<%- include('partials/appFoot') %>

@@ -1,67 +1,58 @@
-<!-- Initialize the canonical 112-flat residential master -->
-<%- include('partials/header') %>
+<%- include('partials/appHead', { pageTitle: 'Initialize Flat Master' }) %>
+<%- include('partials/appNav', { active: 'flats', pageTitle: 'Initialize Flat Master' }) %>
 
-<div class="container center">
-  <div class="row">
-    <div class="col-sm-12 col-md-9 col-lg-10 center" style="max-width: 640px;float: initial;">
-      <div class="card card-profile my-6">
-        <div class="card-body" style="padding:5%; margin:5% 0; padding-top:3%;">
-          <h2 style="background-color:rgb(51, 51, 51); padding:8px; color:white; text-align:center; border-radius:1rem; font-size: 20px;">
-            Initialize Flat Master
-          </h2>
-
-          <% if (result) { %>
-            <!-- Post-initialization report -->
-            <div style="margin-top:20px; background-color:whitesmoke; border-radius:0.5rem; padding:15px 20px;">
-              <h4>Initialization complete</h4>
-              <table style="width:100%; margin-top:10px;">
-                <tr><td>Expected:</td><td style="text-align:right;"><b><%= result.expected %></b></td></tr>
-                <tr><td>Created:</td><td style="text-align:right;"><b><%= result.created %></b></td></tr>
-                <tr><td>Already existing:</td><td style="text-align:right;"><b><%= result.alreadyExisting %></b></td></tr>
-                <tr><td>Errors:</td><td style="text-align:right;"><b><%= result.errors %></b></td></tr>
-              </table>
-            </div>
-            <div style="margin-top: 4%;">
-              <a href="/units" class="btn btn-primary btn-md float-right" style="margin: 10px;">View units</a>
-            </div>
-          <% } else { %>
-            <!-- Confirmed tower configuration -->
-            <div style="margin-top:15px; background-color:whitesmoke; border-radius:0.5rem; padding:15px 20px;">
-              <h4>Tower Configuration</h4>
-              <p style="margin:8px 0;">Residential Floors: <b>1&ndash;28</b></p>
-              <p style="margin:8px 0;">Flats per Floor: <b>4</b></p>
-              <p style="margin:8px 0;">Total Residential Flats: <b>112</b></p>
-              <hr>
-              <p style="margin:8px 0;">Floor 29: <b>Gym + Party Hall</b> (not residential)</p>
-              <p style="margin:8px 0;">Floor 30: <b>Terrace</b> (not residential)</p>
-            </div>
-
-            <p style="margin-top:15px;">
-              You are about to initialize the residential flat master. This creates the
-              canonical 112 flats (101&ndash;104, 201&ndash;204, &hellip;, 2801&ndash;2804).
-              It is safe to run more than once - flats that already exist are left
-              untouched (resident links, occupancy, and other metadata are never overwritten).
-            </p>
-
-            <% if (existingCount > 0) { %>
-              <p style="color:#8a6d3b;">
-                <%= existingCount %> unit(s) already exist for this society. Running this will
-                only fill in any missing canonical flats.
-              </p>
-            <% } %>
-
-            <form action="/units/initialize" method="POST" onsubmit="return confirm('Initialize the 112-flat residential master now?');">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <div style="margin-top: 4%;">
-                <button type="submit" class="btn btn-primary btn-md float-right" style="margin: 10px;">Initialize 112 Flats</button>
-                <a href="/units" class="btn btn-danger btn-md float-right" style="margin: 10px;">Cancel</a>
-              </div>
-            </form>
-          <% } %>
-        </div>
-      </div>
-    </div>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Initialize Flat Master</h1>
+    <div class="sub">Creates the canonical 112 residential flats from the confirmed tower structure.</div>
   </div>
+  <a href="/units" class="btn btn-ghost">Back to flats</a>
 </div>
 
-<%- include('partials/footer') %>
+<% if (result) { %>
+  <div class="flash flash-success" style="max-width:640px;">Initialization complete.</div>
+  <div class="card card-pad" style="max-width:640px;">
+    <div class="eyebrow">Result</div>
+    <dl class="def-list" style="margin-top:14px;">
+      <dt>Expected</dt><dd class="mono"><%= result.expected %></dd>
+      <dt>Created</dt><dd class="mono"><%= result.created %></dd>
+      <dt>Already existing</dt><dd class="mono"><%= result.alreadyExisting %></dd>
+      <dt>Errors</dt><dd class="mono"><%= result.errors %></dd>
+    </dl>
+    <div class="mt-4">
+      <a href="/units" class="btn btn-primary">View the tower</a>
+    </div>
+  </div>
+<% } else { %>
+  <div class="card card-pad" style="max-width:640px;">
+    <div class="eyebrow">Tower configuration</div>
+    <dl class="def-list" style="margin-top:14px;">
+      <dt>Residential floors</dt><dd>1 – 28</dd>
+      <dt>Flats per floor</dt><dd>4</dd>
+      <dt>Total residential flats</dt><dd>112</dd>
+      <dt>Floor 29</dt><dd>Gym + Party Hall <span class="text-muted" style="font-weight:400;">(not residential)</span></dd>
+      <dt>Floor 30</dt><dd>Terrace <span class="text-muted" style="font-weight:400;">(not residential)</span></dd>
+    </dl>
+
+    <hr class="divider">
+
+    <p class="text-muted" style="font-size:14px;">
+      This creates flats <b>101–104, 201–204, … 2801–2804</b>. It is safe to run more than once —
+      existing flats are never modified or overwritten (resident links, occupancy and other details are preserved).
+    </p>
+
+    <% if (existingCount > 0) { %>
+      <div class="flash flash-info"><%= existingCount %> unit(s) already exist. Running this only fills in missing canonical flats.</div>
+    <% } %>
+
+    <form action="/units/initialize" method="POST" onsubmit="return confirm('Initialize the 112-flat residential master now?');">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="flex gap-3">
+        <button type="submit" class="btn btn-primary">Initialize 112 flats</button>
+        <a href="/units" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+<% } %>
+
+<%- include('partials/appFoot') %>

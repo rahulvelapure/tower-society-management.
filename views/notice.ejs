@@ -1,28 +1,30 @@
-<!-- New notice -->
-<%- include('partials/header') %>
+<%- include('partials/appHead', { pageTitle: 'Post notice' }) %>
+<%- include('partials/appNav', { active: 'notices', pageTitle: 'Post Notice' }) %>
 
-<div class="container" style="min-width:80%; margin:auto;">
-  <div class="row col-md-6 col-md-offset-3">
-    <div class="panel panel-primary">
-      <div class="panel-heading text-center">
-        <h4>New Notice</h4>
-      </div>
-      <div class="panel-body">
-        <form action="/notice" method="POST">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <div class="form-group">
-            <label for="comment">Subject</label>
-            <input name="subject" class="form-control"  type="text" id="comment" required></input>
-            <br>
-            <label for="comment">Details</label>
-            <textarea name="details" class="form-control"  type="text" rows="7" id="comment" required></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary">Submit Notice</button>
-          <a href="/noticeboard" class="btn btn-danger">Cancel</a>
-        </form>
-      </div>
-    </div>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Post a notice</h1>
+    <div class="sub">Visible to every resident on the noticeboard.</div>
   </div>
+  <a href="/noticeboard" class="btn btn-ghost">Back to noticeboard</a>
 </div>
 
-<%- include('partials/footer') %>
+<div class="card card-pad" style="max-width:640px;">
+  <form action="/notice" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-field">
+      <label class="label" for="subject">Subject <span class="req">*</span></label>
+      <input class="input" name="subject" id="subject" type="text" placeholder="e.g. Water supply maintenance on Saturday" required autofocus>
+    </div>
+    <div class="form-field">
+      <label class="label" for="details">Details <span class="req">*</span></label>
+      <textarea class="input" name="details" id="details" rows="7" placeholder="Write the full notice…" required></textarea>
+    </div>
+    <div class="flex gap-3 mt-4">
+      <button type="submit" class="btn btn-primary">Publish notice</button>
+      <a href="/noticeboard" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/appFoot') %>

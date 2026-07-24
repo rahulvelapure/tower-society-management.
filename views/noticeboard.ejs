@@ -1,37 +1,41 @@
-<!-- Noticeboard -->
-<%- include('partials/header') %>
+<%- include('partials/appHead', { pageTitle: 'Notices' }) %>
+<%- include('partials/appNav', { active: 'notices', pageTitle: 'Notices' }) %>
 
-<div style="padding:4%; padding-top: 0%; font-family:sans-serif; font-size:14px;">
-  <h2 style="background-color:rgb(51, 51, 51); padding:18px;color:white; text-align: center; border-radius: 1rem; font-size: 20px; max-width: 1000px; margin:auto; margin-bottom: 10px;">
-    Noticeboard
-  </h2>
-  <div class="container container-profile">
-    <% if(isAdmin){ %>
-      <row>
-        <col-4>
-            <a href="/notice" class="btn btn-primary btn-md text-uppercase center" style="border-radius:3rem; max-width:180px; display: block; margin: auto">
-              Create Notice
-            </a>
-        </col-4>
-      </row>
-      <% } %>
-    <div class="row">
-      <% notices.reverse().forEach(function(notice){ %>
-      <div class="col">
-        <div class="card card-profile my-5" style="margin-top: 10px;">
-          <div class="card-body" style="padding:3% 8% 3%;">
-            <div>
-              <i class="fas fa-paperclip"></i></i> <b><%= notice.subject %></b>
-              <p style="padding-left: 20px; color: grey;">
-                <%= notice.date %> - Published by admin
-              </p>
-              <p style="padding-left: 20px"><%= notice.details %></p>
-            </div>
-          </div>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Noticeboard</h1>
+    <div class="sub">Announcements, notices and circulars from the community.</div>
+  </div>
+  <% if (isAdmin) { %>
+    <a href="/notice" class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      Post notice
+    </a>
+  <% } %>
+</div>
+
+<div class="card card-pad">
+  <% const realNotices = notices.filter(n => n && n.subject); %>
+  <% if (!realNotices.length || (realNotices.length === 1 && !realNotices[0].date && !realNotices[0].details)) { %>
+    <div class="empty-state">
+      <div class="icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/></svg></div>
+      <div class="section-title">No notices have been published yet</div>
+      <p class="text-muted">Community announcements will appear here.</p>
+    </div>
+  <% } else { %>
+    <% realNotices.reverse().forEach(notice => { %>
+      <div class="notice-item">
+        <div class="notice-marker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+        </div>
+        <div class="notice-body">
+          <h4><%= notice.subject %></h4>
+          <% if (notice.date) { %><div class="meta"><%= notice.date %> · Published by admin</div><% } %>
+          <% if (notice.details) { %><div class="text"><%= notice.details %></div><% } %>
         </div>
       </div>
-      <% }) %>
-    </div>    
-  </div>
+    <% }) %>
+  <% } %>
 </div>
-<%- include('partials/footer') %>
+
+<%- include('partials/appFoot') %>

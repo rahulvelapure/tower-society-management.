@@ -1,47 +1,60 @@
 <%- include('partials/appHead', { pageTitle: 'Sign in' }) %>
 
-<div class="auth-wrap">
-  <div class="auth-card">
-    <div class="auth-brand">
-      <span class="brand-mark">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
-      </span>
+<div class="auth-split">
+  <section class="auth-hero">
+    <div class="auth-hero-brand">
+      <span class="brand-mark">27</span>
       <span><%= brand.name %></span>
     </div>
-
-    <div class="auth-welcome">
-      <h1>Welcome back</h1>
-      <p>Sign in to your residential community</p>
+    <div class="auth-hero-body">
+      <div class="eyebrow">Private Community Portal</div>
+      <h2>Welcome home.</h2>
+      <p>Everything about your community, in one place. Notices, maintenance, helpdesk and more — for the residents of <%= brand.name %>.</p>
     </div>
+    <div class="auth-hero-foot">Private access for authorized <%= brand.name %> residents. No public account creation.</div>
+  </section>
 
-    <% if (typeof error !== 'undefined' && error) { %>
-      <div class="flash flash-error" style="margin-top:20px;"><%= error %></div>
-    <% } %>
-
-    <form class="auth-form" action="/login" method="POST">
-      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="form-field">
-        <label class="label" for="email">Username / Email</label>
-        <input class="input" name="username" id="email" type="email" placeholder="you@example.com" autocomplete="username" required autofocus>
+  <section class="auth-side">
+    <div class="auth-panel">
+      <div class="auth-brand">
+        <span class="brand-mark">27</span>
+        <span><%= brand.name %></span>
       </div>
-      <div class="form-field">
-        <label class="label" for="password">Password</label>
-        <div class="input-group">
-          <input class="input" name="password" id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required style="padding-right:40px;">
-          <button type="button" class="toggle-pw" aria-label="Show password" onclick="(function(b){var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';})(this)">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
+
+      <div class="auth-welcome">
+        <h1>Sign in</h1>
+        <p>Sign in to your residential community.</p>
+      </div>
+
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="flash flash-error" style="margin-top:20px;"><%= error %></div>
+      <% } %>
+
+      <form class="auth-form" action="/login" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-field">
+          <label class="label" for="email">Email / Username</label>
+          <input class="input" name="username" id="email" type="email" placeholder="you@example.com" autocomplete="username" required autofocus>
         </div>
-      </div>
-      <div class="auth-row">
-        <span></span>
-        <a href="/forgot-password">Forgot password?</a>
-      </div>
-      <button class="btn btn-primary btn-block" type="submit">Sign in</button>
-    </form>
+        <div class="form-field">
+          <label class="label" for="password">Password</label>
+          <div class="input-group">
+            <input class="input" name="password" id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required style="padding-right:42px;">
+            <button type="button" class="toggle-pw" aria-label="Show password" onclick="(function(){var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';})()">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="auth-row">
+          <span></span>
+          <a href="/forgot-password">Forgot password?</a>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" type="submit">Sign in</button>
+      </form>
 
-    <div class="auth-foot"><%= brand.tagline %></div>
-  </div>
+      <div class="auth-foot"><%= brand.tagline %></div>
+    </div>
+  </section>
 </div>
 
 </body>

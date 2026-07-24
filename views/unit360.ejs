@@ -1,0 +1,126 @@
+<%- include('partials/appHead', { pageTitle: 'Flat ' + unit.flatNumber }) %>
+<%- include('partials/appNav', { active: 'flats', pageTitle: 'Flat ' + unit.flatNumber }) %>
+
+<%
+  const st = unit.occupancyStatus || 'vacant';
+  const occBadge = st === 'owner-occupied'
+    ? '<span class="badge badge-success"><span class="dot"></span>Owner occupied</span>'
+    : (st === 'tenant-occupied'
+      ? '<span class="badge badge-info"><span class="dot"></span>Tenant occupied</span>'
+      : '<span class="badge badge-muted"><span class="dot"></span>Vacant</span>');
+  function occLabel(t) { return t ? t.charAt(0).toUpperCase() + t.slice(1) : '—'; }
+%>
+
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Flat 360</div>
+    <h1 class="page-title" style="margin-top:4px;">Flat <%= unit.flatNumber %></h1>
+    <div class="sub">Floor <%= unit.floor %> · <%= unit.unitType %><%= unit.areaSqft ? ' · ' + unit.areaSqft + ' sqft' : '' %> &nbsp; <%- occBadge %></div>
+  </div>
+  <div class="flex gap-2 wrap">
+    <a href="/units" class="btn btn-ghost">Back to tower</a>
+    <a href="/units/<%= unit._id %>/edit" class="btn btn-ghost">Edit unit</a>
+    <a href="/members/new" class="btn btn-primary">Add member</a>
+  </div>
+</div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <div class="card-head"><h3>Members</h3></div>
+    <div class="card-pad">
+      <% if (!members.length) { %>
+        <div class="empty-state" style="padding:20px 0;">
+          <div class="section-title">No member accounts</div>
+          <p class="text-muted">No registered accounts are linked to this flat yet.</p>
+        </div>
+      <% } else { %>
+        <div class="stack">
+          <% members.forEach(m => { %>
+            <div class="row-between" style="border-bottom:1px solid var(--border); padding-bottom:12px;">
+              <div>
+                <div class="cell-strong"><%= m.firstName %> <%= m.lastName %></div>
+                <div class="caption"><%= occLabel(m.occupancyType) %> · <%= m.username %><%= m.phoneNumber ? ' · ' + m.phoneNumber : '' %></div>
+              </div>
+              <div class="flex gap-2">
+                <% if (m.accountStatus === 'active') { %><span class="badge badge-success">Active</span>
+                <% } else if (m.accountStatus === 'inactive') { %><span class="badge badge-danger">Inactive</span>
+                <% } else { %><span class="badge badge-warning">Invited</span><% } %>
+                <a class="btn btn-ghost btn-sm" href="/members/<%= m._id %>/edit">Edit</a>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+
+      <% const contacts = []; %>
+      <% if (unit.owner && unit.owner.name) contacts.push({ label: 'Owner (record)', name: unit.owner.name, detail: [unit.owner.phone, unit.owner.email].filter(Boolean).join(' · ') }); %>
+      <% if (unit.tenant && unit.tenant.name) contacts.push({ label: 'Tenant (record)', name: unit.tenant.name, detail: [unit.tenant.phone, unit.tenant.email].filter(Boolean).join(' · ') }); %>
+      <% (unit.occupants || []).forEach(o => contacts.push({ label: 'Occupant', name: o.name, detail: o.relation || '' })); %>
+      <% if (contacts.length) { %>
+        <div class="fieldset-title">Occupancy records</div>
+        <dl class="def-list">
+          <% contacts.forEach(c => { %>
+            <dt><%= c.label %></dt>
+            <dd><%= c.name %><% if (c.detail) { %> <span class="text-muted" style="font-weight:400;">· <%= c.detail %></span><% } %></dd>
+          <% }) %>
+        </dl>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="stack" style="margin-top:0;">
+    <div class="card card-pad">
+      <div class="eyebrow">Financial summary</div>
+      <div class="grid" style="grid-template-columns:1fr 1fr; margin-top:12px;">
+        <div>
+          <div class="caption">Current outstanding</div>
+          <div class="kpi-value mono" style="font-size:26px; color:<%= outstanding > 0 ? 'var(--danger)' : 'var(--success)' %>;">₹<%= outstanding %></div>
+        </div>
+        <div>
+          <div class="caption">Monthly maintenance</div>
+          <div class="kpi-value mono" style="font-size:26px;">₹<%= monthlyTotal %></div>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="caption">Last payment</div>
+      <% if (lastPayment && lastPayment.date) { %>
+        <div style="font-weight:600; margin-top:3px;">₹<%= lastPayment.amount %> <span class="text-muted" style="font-weight:400;">on <%= new Date(lastPayment.date).toLocaleDateString() %> · Receipt <%= lastPayment.invoice %></span></div>
+      <% } else { %>
+        <div class="text-muted" style="margin-top:3px;">No payments recorded yet.</div>
+      <% } %>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Open complaints</h3><a class="caption" href="/helpdesk">Helpdesk</a></div>
+      <div class="card-pad">
+        <% if (!openComplaints.length) { %>
+          <p class="text-muted" style="margin:0;">No open complaints from this flat.</p>
+        <% } else { %>
+          <div class="stack">
+            <% openComplaints.forEach(c => { %>
+              <div>
+                <div class="cell-strong"><%= c.category %></div>
+                <div class="caption"><%= c.date %> · <%= c.type %> · by <%= c.by %></div>
+                <div class="text-muted" style="font-size:13.5px; margin-top:2px;"><%= c.description %></div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (unit.tenant && (unit.tenant.leaseStart || unit.tenant.leaseEnd) || unit.moveInDate || unit.moveOutDate) { %>
+      <div class="card card-pad">
+        <div class="eyebrow">Dates</div>
+        <dl class="def-list" style="margin-top:12px;">
+          <% if (unit.tenant && unit.tenant.leaseStart) { %><dt>Lease start</dt><dd><%= unit.tenant.leaseStart.toISOString().slice(0,10) %></dd><% } %>
+          <% if (unit.tenant && unit.tenant.leaseEnd) { %><dt>Lease end</dt><dd><%= unit.tenant.leaseEnd.toISOString().slice(0,10) %></dd><% } %>
+          <% if (unit.moveInDate) { %><dt>Move-in</dt><dd><%= unit.moveInDate.toISOString().slice(0,10) %></dd><% } %>
+          <% if (unit.moveOutDate) { %><dt>Move-out</dt><dd><%= unit.moveOutDate.toISOString().slice(0,10) %></dd><% } %>
+        </dl>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('partials/appFoot') %>

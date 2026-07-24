@@ -1,46 +1,45 @@
-<!-- New complaint -->
-<%- include('partials/header') %>
+<%- include('partials/appHead', { pageTitle: 'Raise complaint' }) %>
+<%- include('partials/appNav', { active: 'complaints', pageTitle: 'Raise Complaint' }) %>
 
-<div class="container" style="min-width:80%; margin:auto;">
-  <div class="row col-md-6 col-md-offset-3">
-    <div class="panel panel-danger">
-      <div class="panel-heading text-center">
-          <h4>Raise Complaint</h4>
-      </div>
-      <div class="panel-body">
-          <form action="/complaint" method="POST">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <label>Category</label>
-            <select name="category" class="form-control">
-              <option>Car Parking</option>
-              <option>Common Area</option>
-              <option>Electrical</option>
-              <option>Payment</option>
-              <option>Plumbing</option>
-              <option>Other</option>
-            </select> 
-            <br>
-            <div class="form-group">
-              <label>Type</label>
-              <div class="form-group">
-                <label for="Personal" class="radio-inline">
-                  <input type="radio" name="type" id="Personal" value="Personal" required>Personal
-                </label>
-                <label for="Community" class="radio-inline">
-                  <input type="radio" name="type" id="Community" value="Community" required>Community
-                </label>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="comment">Description</label>
-              <textarea name="description" class="form-control"  type="text" rows="7" id="comment" required></textarea>
-            </div>
-            <button type="submit" class="btn btn-danger">Submit Complaint</button>
-            <a href="/helpdesk" class="btn btn-primary">Cancel</a>
-          </form>
-      </div>
-    </div>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Raise a complaint</h1>
+    <div class="sub">The management committee will review and resolve it.</div>
   </div>
+  <a href="/helpdesk" class="btn btn-ghost">Back to helpdesk</a>
 </div>
 
-<%- include('partials/footer') %>
+<div class="card card-pad" style="max-width:640px;">
+  <form action="/complaint" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-field">
+      <label class="label" for="category">Category <span class="req">*</span></label>
+      <select class="input" name="category" id="category" required>
+        <option>Car Parking</option>
+        <option>Common Area</option>
+        <option>Electrical</option>
+        <option>Payment</option>
+        <option>Plumbing</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label class="label">Type <span class="req">*</span></label>
+      <div class="radio-row">
+        <label><input type="radio" name="type" value="Personal" required> Personal</label>
+        <label><input type="radio" name="type" value="Community" required> Community</label>
+      </div>
+      <div class="field-hint">Personal issues affect only your flat; community issues affect shared areas.</div>
+    </div>
+    <div class="form-field">
+      <label class="label" for="description">Description <span class="req">*</span></label>
+      <textarea class="input" name="description" id="description" rows="6" placeholder="Describe the issue clearly…" required></textarea>
+    </div>
+    <div class="flex gap-3 mt-4">
+      <button type="submit" class="btn btn-primary">Submit complaint</button>
+      <a href="/helpdesk" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/appFoot') %>

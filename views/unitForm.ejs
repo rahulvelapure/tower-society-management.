@@ -1,94 +1,93 @@
-<!-- Add / edit a unit -->
-<%- include('partials/header') %>
+<%- include('partials/appHead', { pageTitle: unit ? 'Edit unit' : 'Add unit' }) %>
+<%- include('partials/appNav', { active: 'flats', pageTitle: unit ? 'Edit Unit' : 'Add Unit' }) %>
 
-<div class="container center">
-  <div class="row">
-    <div class="col-sm-12 col-md-9 col-lg-10 center" style="max-width: 600px;float: initial;">
-      <div class="card card-profile my-6">
-        <div class="card-body" style="padding:5%; margin:5% 0; padding-top:3%;">
-          <h2 style="background-color:rgb(51, 51, 51); padding:8px; color:white; text-align:center; border-radius:1rem; font-size: 20px;">
-            <%= unit ? 'Edit Unit' : 'Add Unit' %>
-          </h2>
-          <% if (typeof error !== 'undefined' && error) { %>
-            <p style="color:#d9534f; text-align:center;"><%= error %></p>
-          <% } %>
-          <form class="form-edit" action="<%= unit ? '/units/' + unit._id : '/units' %>" method="POST">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <div class="row" style="margin: 1%;">
-              <div class="col-sm-6" style="margin-top:4%"><b>Floor:</b>
-                <input name="floor" type="number" min="1" max="28" class="form-control" value="<%= unit ? unit.floor : '' %>" required>
-              </div>
-              <div class="col-sm-6" style="margin-top:4%"><b>Flat number:</b>
-                <input name="flatNumber" type="text" class="form-control" value="<%= unit ? unit.flatNumber : '' %>" required>
-              </div>
-
-              <div class="col-sm-6" style="margin-top:4%"><b>Unit type:</b>
-                <select name="unitType" class="form-control">
-                  <% ['1BHK','2BHK','3BHK','4BHK','shop','office','other'].forEach(t => { %>
-                    <option value="<%= t %>" <%= unit && unit.unitType === t ? 'selected' : '' %>><%= t %></option>
-                  <% }) %>
-                </select>
-              </div>
-              <div class="col-sm-6" style="margin-top:4%"><b>Area (sqft):</b>
-                <input name="areaSqft" type="number" class="form-control" value="<%= unit && unit.areaSqft ? unit.areaSqft : '' %>">
-              </div>
-
-              <div class="col-sm-12" style="margin-top:4%"><b>Occupancy status:</b>
-                <select name="occupancyStatus" class="form-control">
-                  <% ['owner-occupied','tenant-occupied','vacant'].forEach(s => { %>
-                    <option value="<%= s %>" <%= unit && unit.occupancyStatus === s ? 'selected' : '' %>><%= s %></option>
-                  <% }) %>
-                </select>
-              </div>
-
-              <div class="col-sm-12" style="margin-top:4%;"><b>Owner details</b></div>
-              <div class="col-sm-4" style="margin-top:2%">
-                <input name="ownerName" type="text" placeholder="Name" class="form-control" value="<%= unit && unit.owner ? unit.owner.name || '' : '' %>">
-              </div>
-              <div class="col-sm-4" style="margin-top:2%">
-                <input name="ownerPhone" type="tel" placeholder="Phone" class="form-control" value="<%= unit && unit.owner ? unit.owner.phone || '' : '' %>">
-              </div>
-              <div class="col-sm-4" style="margin-top:2%">
-                <input name="ownerEmail" type="email" placeholder="Email" class="form-control" value="<%= unit && unit.owner ? unit.owner.email || '' : '' %>">
-              </div>
-
-              <div class="col-sm-12" style="margin-top:4%;"><b>Tenant details (if applicable)</b></div>
-              <div class="col-sm-4" style="margin-top:2%">
-                <input name="tenantName" type="text" placeholder="Name" class="form-control" value="<%= unit && unit.tenant ? unit.tenant.name || '' : '' %>">
-              </div>
-              <div class="col-sm-4" style="margin-top:2%">
-                <input name="tenantPhone" type="tel" placeholder="Phone" class="form-control" value="<%= unit && unit.tenant ? unit.tenant.phone || '' : '' %>">
-              </div>
-              <div class="col-sm-4" style="margin-top:2%">
-                <input name="tenantEmail" type="email" placeholder="Email" class="form-control" value="<%= unit && unit.tenant ? unit.tenant.email || '' : '' %>">
-              </div>
-              <div class="col-sm-6" style="margin-top:2%">
-                Lease start:
-                <input name="leaseStart" type="date" class="form-control" value="<%= unit && unit.tenant && unit.tenant.leaseStart ? unit.tenant.leaseStart.toISOString().slice(0,10) : '' %>">
-              </div>
-              <div class="col-sm-6" style="margin-top:2%">
-                Lease end:
-                <input name="leaseEnd" type="date" class="form-control" value="<%= unit && unit.tenant && unit.tenant.leaseEnd ? unit.tenant.leaseEnd.toISOString().slice(0,10) : '' %>">
-              </div>
-
-              <div class="col-sm-6" style="margin-top:4%">
-                Move-in date:
-                <input name="moveInDate" type="date" class="form-control" value="<%= unit && unit.moveInDate ? unit.moveInDate.toISOString().slice(0,10) : '' %>">
-              </div>
-              <div class="col-sm-6" style="margin-top:4%">
-                Move-out date:
-                <input name="moveOutDate" type="date" class="form-control" value="<%= unit && unit.moveOutDate ? unit.moveOutDate.toISOString().slice(0,10) : '' %>">
-              </div>
-            </div>
-            <div style="margin-top: 4%;">
-              <button type="submit" class="btn btn-primary btn-md float-right" style="margin: 10px;">Save</button>
-              <a href="/units" class="btn btn-danger btn-md float-right" style="margin: 10px;">Cancel</a>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+<div class="page-header">
+  <div>
+    <h1 class="page-title"><%= unit ? 'Edit Flat ' + unit.flatNumber : 'Add unit' %></h1>
+    <div class="sub">Residential floors 1–28 only. Floors 29–30 are amenities.</div>
   </div>
+  <a href="/units" class="btn btn-ghost">Back to flats</a>
 </div>
 
-<%- include('partials/footer') %>
+<% if (typeof error !== 'undefined' && error) { %><div class="flash flash-error" style="max-width:640px;"><%= error %></div><% } %>
+
+<div class="card card-pad" style="max-width:640px;">
+  <form action="<%= unit ? '/units/' + unit._id : '/units' %>" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="fieldset-title">Unit</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-field">
+        <label class="label" for="floor">Floor (1–28) <span class="req">*</span></label>
+        <input class="input" name="floor" id="floor" type="number" min="1" max="28" value="<%= unit ? unit.floor : '' %>" required>
+      </div>
+      <div class="form-field">
+        <label class="label" for="flatNumber">Flat number <span class="req">*</span></label>
+        <input class="input" name="flatNumber" id="flatNumber" type="text" value="<%= unit ? unit.flatNumber : '' %>" required>
+      </div>
+      <div class="form-field">
+        <label class="label" for="unitType">Unit type</label>
+        <select class="input" name="unitType" id="unitType">
+          <% ['1BHK','2BHK','3BHK','4BHK','shop','office','other'].forEach(t => { %>
+            <option value="<%= t %>" <%= unit && unit.unitType === t ? 'selected' : '' %>><%= t %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="label" for="areaSqft">Area (sqft)</label>
+        <input class="input" name="areaSqft" id="areaSqft" type="number" min="0" value="<%= unit && unit.areaSqft ? unit.areaSqft : '' %>">
+      </div>
+    </div>
+    <div class="form-field">
+      <label class="label" for="occupancyStatus">Occupancy status</label>
+      <select class="input" name="occupancyStatus" id="occupancyStatus">
+        <% [['vacant','Vacant'],['owner-occupied','Owner occupied'],['tenant-occupied','Tenant occupied']].forEach(([v,l]) => { %>
+          <option value="<%= v %>" <%= unit && unit.occupancyStatus === v ? 'selected' : '' %>><%= l %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="fieldset-title">Owner details</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="form-field"><input class="input" name="ownerName" placeholder="Name" value="<%= unit && unit.owner ? unit.owner.name || '' : '' %>"></div>
+      <div class="form-field"><input class="input" name="ownerPhone" type="tel" placeholder="Phone" value="<%= unit && unit.owner ? unit.owner.phone || '' : '' %>"></div>
+      <div class="form-field"><input class="input" name="ownerEmail" type="email" placeholder="Email" value="<%= unit && unit.owner ? unit.owner.email || '' : '' %>"></div>
+    </div>
+
+    <div class="fieldset-title">Tenant details (if applicable)</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="form-field"><input class="input" name="tenantName" placeholder="Name" value="<%= unit && unit.tenant ? unit.tenant.name || '' : '' %>"></div>
+      <div class="form-field"><input class="input" name="tenantPhone" type="tel" placeholder="Phone" value="<%= unit && unit.tenant ? unit.tenant.phone || '' : '' %>"></div>
+      <div class="form-field"><input class="input" name="tenantEmail" type="email" placeholder="Email" value="<%= unit && unit.tenant ? unit.tenant.email || '' : '' %>"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-field">
+        <label class="label" for="leaseStart">Lease start</label>
+        <input class="input" name="leaseStart" id="leaseStart" type="date" value="<%= unit && unit.tenant && unit.tenant.leaseStart ? unit.tenant.leaseStart.toISOString().slice(0,10) : '' %>">
+      </div>
+      <div class="form-field">
+        <label class="label" for="leaseEnd">Lease end</label>
+        <input class="input" name="leaseEnd" id="leaseEnd" type="date" value="<%= unit && unit.tenant && unit.tenant.leaseEnd ? unit.tenant.leaseEnd.toISOString().slice(0,10) : '' %>">
+      </div>
+    </div>
+
+    <div class="fieldset-title">Move dates</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-field">
+        <label class="label" for="moveInDate">Move-in date</label>
+        <input class="input" name="moveInDate" id="moveInDate" type="date" value="<%= unit && unit.moveInDate ? unit.moveInDate.toISOString().slice(0,10) : '' %>">
+      </div>
+      <div class="form-field">
+        <label class="label" for="moveOutDate">Move-out date</label>
+        <input class="input" name="moveOutDate" id="moveOutDate" type="date" value="<%= unit && unit.moveOutDate ? unit.moveOutDate.toISOString().slice(0,10) : '' %>">
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-4">
+      <button type="submit" class="btn btn-primary"><%= unit ? 'Save changes' : 'Create unit' %></button>
+      <a href="/units" class="btn btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/appFoot') %>

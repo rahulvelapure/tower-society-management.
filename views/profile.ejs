@@ -1,91 +1,63 @@
-<!-- Personal + Society information -->
-<%- include('partials/header') %>
+<%- include('partials/appHead', { pageTitle: 'Profile' }) %>
+<%- include('partials/appNav', { active: 'profile', pageTitle: 'Profile' }) %>
 
-<row>
-  <col-4>
-      <a href="/editProfile" class="btn btn-danger btn-md text-uppercase center" style="border-radius:3rem; max-width:150px; display: block; margin: auto">
-        Edit Profile
-      </a>
-  </col-4>
-</row>
-<div class="container container-profile">
-  <div class="row">
-    <div class="col">
-      <div class="card card-profile my-5">
-        <div class="card-body" style="padding:8%;">
-          <h1 style="text-align:left; font-size:20px; padding-left:30px">Profile</h1>
-          <hr class="my-4" style="height: 3px; background-color:#d9534f; border-color:#d9534f ; border-radius:4px;">
-          <div style="padding-left:25px; font-style:bold; color:rgb(139, 139, 139);">
-              <b>Personal Information</b>
-          </div>
-          <div style="padding: 15px;font-size: 15px; font-family: sans-serif; padding-left: 0%">
-            <div class=row style="margin: 13px; margin-bottom:0px;margin-top:0px">
-              <div class="col-sm-6 col-lg-4"> Name :</div>
-              <div class="col-sm-6 col-lg-8">
-                <span class="profile-text"><%= resident.firstName %> <%= resident.lastName %></span>
-              </div>
-            </div>
-            <hr class="my-4">
-            <div class=row style="margin: 13px;margin-bottom:0px;margin-top:0px;">
-              <div class="col-sm-6 col-lg-4"> Phone :</div>
-              <div class="col-sm-6 col-lg-8"><span class="profile-text"><%= resident.phoneNumber %></span></div>
-            </div>
-            <hr class="my-4">
-            <div class=row style="margin: 13px;margin-bottom:0px;margin-top:0px;">
-              <div class="col-sm-6 col-lg-4"> Flat :</div>
-              <div class="col-sm-6 col-lg-8">
-                <span class="profile-text">
-                  <%= resident.flatNumber %>
-                  <% if (resident.unit) { %>
-                    (Floor <%= resident.unit.floor %>, <%= resident.unit.unitType %>, <%= resident.unit.occupancyStatus %>)
-                  <% } %>
-                </span>
-              </div>
-            </div>
-            <hr class="my-4">
-            <div class=row style="margin: 13px;margin-bottom:0px;margin-top:0px;">
-              <div class="col-sm-6 col-lg-4"> Email ID :</div>
-              <div class="col-sm-6 col-lg-8">
-                <span class="profile-text" style="text-align:justify; word-break:break-all"><%= resident.username %></span>
-              </div>
-            </div>
-          </div>
-          <hr class="my-4" style="height: 3px; background-color:#c2c2c2; border-color:#c2c2c2 ; border-radius:2px;">
-          <div style="padding-left:25px; padding-top:10px; font-style:bold; color:rgb(139, 139, 139);">
-            <b>Society Information</b>
-          </div>
-          <div style="padding-top: 15px;font-size: 15px; font-family: sans-serif; padding-left: 0%;  ">
-            <div class=row style="margin: 13px; margin-bottom:0px;margin-top:0px;">
-              <div class="col-sm-6 col-lg-4"> Society Name :</div>
-              <div class="col-sm-6 col-lg-8"><span class="profile-text"><%= society.societyName %></span></div>
-            </div>
-            <hr class="my-4">
-            <div class=row style="margin: 13px; margin-bottom:0px;margin-top:0px;">
-              <div class="col-sm-6 col-lg-4">Address :</div>
-              <div class="col-sm-6 col-lg-8 " style="text-align: justify; word-break:keep-all; margin-left: 0%;">
-                <span class="profile-text"> <%= society.societyAddress.address %></span>
-              </div>
-            </div>
-            <hr class="my-4">
-            <div class=row style="margin: 13px; margin-bottom:0px;margin-top:0px;">
-                <div class="col-sm-6 col-lg-4">City :</div>
-                <div class="col-sm-6 col-lg-8"><span class="profile-text"><%= society.societyAddress.city %></span></div>
-            </div>
-            <hr class="my-4">
-            <div class=row style="margin: 13px; margin-bottom:0px;margin-top:0px;">
-                <div class="col-sm-6 col-lg-4"> District :</div>
-                <div class="col-sm-6 col-lg-8"><span class="profile-text"><%= society.societyAddress.district %></span></div>
-            </div>
-            <hr class="my-4">
-            <div class=row style="margin: 13px; margin-bottom:0px;margin-top:0px;">
-                <div class="col-sm-6 col-lg-4"> Postal Code :</div>
-                <div class="col-sm-6 col-lg-8"><span class="profile-text"><%= society.societyAddress.postalCode %></span></div>
-            </div>
-          </div>
-        </div>
+<%
+  const initials = ((resident.firstName || ' ')[0] + (resident.lastName || ' ')[0]).toUpperCase();
+  function occLabel(t) { return t ? t.charAt(0).toUpperCase() + t.slice(1) : null; }
+%>
+
+<div class="page-header">
+  <div class="profile-hero">
+    <span class="avatar-lg"><%= initials %></span>
+    <div>
+      <h2><%= resident.firstName %> <%= resident.lastName %></h2>
+      <div class="sub">
+        Flat <%= resident.unit ? resident.unit.flatNumber : resident.flatNumber %>
+        · <%= resident.isAdmin ? 'Administrator' : 'Resident' %>
       </div>
     </div>
   </div>
+  <a href="/editProfile" class="btn btn-primary">Edit profile</a>
 </div>
 
-<%- include('partials/footer') %>
+<div class="grid cols-2">
+  <div class="card card-pad">
+    <div class="eyebrow">Contact information</div>
+    <dl class="def-list" style="margin-top:14px;">
+      <dt>Email</dt><dd><%= resident.username %></dd>
+      <dt>Phone</dt><dd class="mono"><%= resident.phoneNumber %></dd>
+    </dl>
+
+    <div class="eyebrow" style="margin-top:24px;">Residence</div>
+    <dl class="def-list" style="margin-top:14px;">
+      <dt>Community</dt><dd><%= society.societyName %></dd>
+      <dt>Flat</dt><dd class="mono"><%= resident.unit ? resident.unit.flatNumber : resident.flatNumber %></dd>
+      <% if (resident.unit) { %><dt>Floor</dt><dd><%= resident.unit.floor %></dd><% } %>
+      <% if (occLabel(resident.occupancyType)) { %><dt>Occupancy</dt><dd><%= occLabel(resident.occupancyType) %></dd><% } %>
+    </dl>
+  </div>
+
+  <div class="card card-pad">
+    <div class="eyebrow">Account</div>
+    <dl class="def-list" style="margin-top:14px;">
+      <dt>Role</dt><dd><%= resident.isAdmin ? 'Administrator' : 'Resident' %></dd>
+      <dt>Status</dt>
+      <dd>
+        <% if (resident.accountStatus === 'inactive') { %><span class="badge badge-danger"><span class="dot"></span>Inactive</span>
+        <% } else if (resident.accountStatus === 'invited') { %><span class="badge badge-warning"><span class="dot"></span>Invitation pending</span>
+        <% } else { %><span class="badge badge-success"><span class="dot"></span>Active</span><% } %>
+      </dd>
+      <dt>Member since</dt><dd><%= resident.createdAt ? new Date(resident.createdAt).toLocaleDateString() : '—' %></dd>
+    </dl>
+
+    <div class="eyebrow" style="margin-top:24px;">Society address</div>
+    <dl class="def-list" style="margin-top:14px;">
+      <dt>Address</dt><dd><%= society.societyAddress.address %></dd>
+      <dt>City</dt><dd><%= society.societyAddress.city %></dd>
+      <dt>District</dt><dd><%= society.societyAddress.district %></dd>
+      <dt>Postal code</dt><dd class="mono"><%= society.societyAddress.postalCode %></dd>
+    </dl>
+  </div>
+</div>
+
+<%- include('partials/appFoot') %>

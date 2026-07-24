@@ -1,257 +1,181 @@
-<!-- Maintenance Bill + Payment + Admin accounting section -->
-<%- include('partials/header') %>
-<style>
-  body {
-    background-image: none;
-  }
-</style>
-<div style="padding:4%; padding-top: 0%; font-family:sans-serif; font-size:15px;">
-  <div style="display: flex; justify-content: center ">
-    <col-4>
-      <button id="download-btn" class="btn btn-info btn-md text-uppercase" style="border-radius:3rem; max-width:180px; ">
-        Download Bill
-      </button>
-      <button 
-      <% if(totalAmount==0){ %> 
-        disabled
-      <% } %>
-        id="checkout-button" class="btn btn-success btn-md text-uppercase" style="border-radius:3rem; max-width:180px; ">
-        Pay Bill
-      </button>     
-      <% if(resident.isAdmin){ %>
-      <a href="/editBill" class="btn btn-primary btn-md text-uppercase" style="border-radius:3rem; max-width:180px; ">
-        Edit Bill
-      </a>   
-      <% } %>
-    </col-4>
-  </div>
-  <br>
-  <div id="print-content">
-    <table class="bill-header">
-      <tr>
-        <td>
-          <p><%= society.societyName %></p>
-          <p><%= society.societyAddress.address %>, <%= society.societyAddress.city %>, 
-            <%= society.societyAddress.district %>-<%= society.societyAddress.postalCode %>
-          </p>
-        </td>
-      </tr>
-    </table>
-    <div style="padding: 10px 20px; display: flex; justify-content: space-between; border: 1px solid #ddd; border-bottom: none;  max-width: 1000px; margin: auto;">
-      <p>Bill No: <b>1301</b></p>
-      <p>For: <b><%= monthName %>, <%= year %></b></p>
-      <p>Date: <b><%= date %></b></p>
-    </div>
-    <div style="padding: 0 20px; display: flex; justify-content: space-between; border: 1px solid #ddd;border-top: none; border-bottom: none;  max-width: 1000px; margin: auto;">
-      <p>Name: <b><%= resident.firstName %> <%= resident.lastName %></b></p>
-      <p>Flat: <b><%= resident.flatNumber %></b></p>
-    </div>
-    <table class="bill-content">
-      <tr>
-        <th>Sr. No.</th>
-        <th>Particulars</th>
-        <th>Amount</th>
-      </tr>
-      <tr>
-        <td>1</td>
-        <td>Society Charges</td>
-        <td><%= society.maintenanceBill.societyCharges %></td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td>Repairs and Maintenance</td>
-        <td><%= society.maintenanceBill.repairsAndMaintenance %></td>
-      </tr>
-      <tr>
-        <td>3</td>
-        <td>Sinking Fund</td>
-        <td><%= society.maintenanceBill.sinkingFund %></td>
-      </tr>
-      <tr>
-        <td>4</td>
-        <td>Water Charges</td>
-        <td><%= society.maintenanceBill.waterCharges %></td>
-      </tr>
-      <tr>
-        <td>5</td>
-        <td>Insurance Charges</td>
-        <td><%= society.maintenanceBill.insuranceCharges %></td>
-      </tr>
-      <tr>
-        <td>6</td>
-        <td>Parking Charges</td>
-        <td><%= society.maintenanceBill.parkingCharges %></td>
-      </tr>
-      <tr>
-        <td>7</td>
-        <td>Credit Balance</td>
-        <td>- <%= creditBalance %></td>
-      </tr>
-      <tr>
-        <td>8</td>
-        <td>Pending Due</td>
-        <td><%= pendingDue %></td>
-      </tr>
-      <tfoot>
-        <tr>
-          <td></td>
-          <td>Total Amount Due</td>
-          <td><%= totalAmount %></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-  <br>
+<%- include('partials/appHead', { pageTitle: 'Bills' }) %>
+<%- include('partials/appNav', { active: 'bills', pageTitle: 'Bills' }) %>
 
-  <% if(receipt.invoice){ %>
-  <hr class="my-4">
-  <div style="display: flex; justify-content: center ">
-    <button id="download-receipt" class="btn btn-info btn-md text-uppercase" style="border-radius:3rem; max-width:180px; margin: 0 0 30px;">
-      Download Receipt
-    </button>
-  </div>
-  <div id="receipt" style="background-color: rgba(128, 128, 128, 0.048); max-width: 1000px; margin: auto;">
-    <table class="bill-header" style="border: 1px solid #ddd; border-bottom: none;">
-      <tr>
-        <td>
-          <p style="padding-top:10px"><%= society.societyName %></p>
-          <p><%= society.societyAddress.address %>, <%= society.societyAddress.city %>, 
-            <%= society.societyAddress.district %>-<%= society.societyAddress.postalCode %>
-          </p>
-        </td>
-      </tr>
-    </table>
-    <% let [month, date, year1]    = new Date(receipt.date).toLocaleDateString().split("/") %>
-    <% let receiptMonth = new Date(receipt.date).toLocaleString("default", { month: "long" }) %>
-    <div id="receipt" style="display: flex; justify-content: center; border: 1px solid #ddd; border-bottom: none;  max-width: 1000px; margin: auto;">
-      <p style="padding: 20px 0 10px"><b>Receipt</b></p>
-    </div>
-    <div style="padding: 0 20px 10px; display: flex; justify-content: space-between; border: 1px solid #ddd; border-top: none; border-bottom: none;  max-width: 1000px; margin: auto;">
-      <p>Receipt: <b><%= receipt.invoice %></b></p>
-      <p>For: <b><%= receiptMonth %>, <%= year1 %></b></p>
-      <p>Date: <b><%= date %>/<%= month %>/<%= year1 %></b></p>
-    </div>
-    <div  style="padding: 0 20px; display: flex; justify-content: space-between; border: 1px solid #ddd; border-top: none; border-bottom: none;  max-width: 1000px; margin: auto;">
-      <p>Received with thanks from <%= resident.flatNumber %> - <%= resident.firstName %> <%= resident.lastName %>, 
-        the sum of rupees <span style="color: black;" id="words"></span style="color: black;"> on <%= date %> <%= receiptMonth %>, <%= year1 %>.
-      </p>
-    </div>
-    <div style="padding: 20px 20px 10px; display: flex; justify-content: space-between; flex-direction: column; border: 1px solid #ddd; border-bottom: none; border-top: none;  max-width: 1000px; margin: auto;">
-      <p><b>Remark:</b></p>
-      <p>Being amount received from member towards maintenance charges for the month of <%= receiptMonth %>, <%= year1 %>.</p>
-    </div>
-    <input id="number" type="text" style="display: none;" value="<%= receipt.amount %>" />
-    <div style="padding: 20px 20px; display: flex; justify-content: space-between; border: 1px solid #ddd; border-top: none;  max-width: 1000px; margin: auto;">
-      <p>₹<b><%= receipt.amount %></b></p>
-      <div style="display: flex; justify-content: space-between; flex-direction: column">
-        <p>For <%= society.societyName %></p>
-        <br>
-        <p>Secretary/Treasurer</p>
-      </div>
-    </div>
-  </div>
-  <% } %>
+<%
+  let statusBadge;
+  if (totalAmount <= 0) statusBadge = '<span class="badge badge-success"><span class="dot"></span>Paid</span>';
+  else if (pendingDue > 0) statusBadge = '<span class="badge badge-danger"><span class="dot"></span>Overdue</span>';
+  else statusBadge = '<span class="badge badge-warning"><span class="dot"></span>Due</span>';
+%>
 
-  <% if(resident.isAdmin){ %>
-    <hr class="my-4">
-    <br>
-    <h2 style="background-color:rgb(51, 51, 51); padding:16px;color:white; text-align: center; border-radius: 1rem; font-size: 20px; max-width: 1000px; margin:auto">
-      Accounting
-    </h2>
-    <br>
-    <div style="display: flex; justify-content: center ">
-      <table class="bill-content">
-        <tr>
-          <th>Resident</th>
-          <th>Flat</th>
-          <th>Status</th>
-          <th>Due</th>
-        </tr>
-        <% societyResidents.forEach((resident) => { %>
-          <!-- Calculate resident payment status start -->
-          <% function monthDiff(dateFrom, dateTo) { %>
-            <% return dateTo.getMonth() - dateFrom.getMonth() + (12 * (dateTo.getFullYear() - dateFrom.getFullYear())) %>
-          <% } %>
-          <% const dateToday = new Date(); %>
-          <% let totalMonth = 0  %>
-          <% let dateFrom = resident.createdAt; %>
-          <% if(resident.lastPayment.date){ %>
-						<% dateFrom = resident.lastPayment.date; %>
-						<% totalMonth = monthDiff(dateFrom,dateToday) %>
-					<% } else { %>
-						<% totalMonth = monthDiff(dateFrom,dateToday) + 1 %>
-					<% } %>
-          <% let credit = 0; %>
-					<% let due = 0; %>
-					<% if(totalMonth==0) { %>
-						<% credit = monthlyTotal; %>
-					<% } else if(totalMonth>1) { %>
-						<% due =  (totalMonth-1)*monthlyTotal %>
-					<% } %>
-					<% const totalAmount = monthlyTotal + due - credit %>
-          <!-- Calculate resident payment status end-->
-
-          <tr>
-            <td><%= resident.firstName %> <%= resident.lastName %></td>
-            <td><%= resident.flatNumber %></td>
-            <% if(totalAmount==0){ %>
-              <td><i style="color: lightgreen;" class="fas fa-circle"></i></td>
-            <% } else { %>
-              <td><i style="color: lightcoral;" class="fas fa-circle"></i></td>
-            <% } %>
-            <td><%= totalAmount %></td>
-          </tr>
-        <% }) %>
-      </table>
-    </div>
-  <% } %>
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Maintenance bill</h1>
+    <div class="sub"><%= monthName %> <%= year %> · Flat <%= resident.flatNumber %></div>
+  </div>
+  <div class="flex gap-2 wrap no-print">
+    <button id="download-btn" class="btn btn-ghost">Download bill</button>
+    <% if (resident.isAdmin) { %><a href="/editBill" class="btn btn-ghost">Edit charges</a><% } %>
+  </div>
 </div>
 
-<script type="text/javascript">
-  // Create an instance of the Stripe object with your publishable API key
+<div class="card card-pad" style="margin-bottom:20px;">
+  <div class="amount-hero">
+    <div>
+      <div class="due-label">Total payable · <%= monthName %> <%= year %></div>
+      <div class="due-value" style="color:<%= totalAmount > 0 ? 'var(--text)' : 'var(--success)' %>;">₹<%= totalAmount %></div>
+      <div style="margin-top:6px;"><%- statusBadge %></div>
+    </div>
+    <div class="no-print">
+      <button id="checkout-button" class="btn btn-primary btn-lg" <%= totalAmount <= 0 ? 'disabled' : '' %>>Pay now</button>
+    </div>
+  </div>
+</div>
+
+<div id="print-content" class="doc" style="margin-bottom:24px;">
+  <div class="doc-head">
+    <div class="org"><%= society.societyName %></div>
+    <div class="addr"><%= society.societyAddress.address %>, <%= society.societyAddress.city %>, <%= society.societyAddress.district %> - <%= society.societyAddress.postalCode %></div>
+  </div>
+  <div class="doc-meta">
+    <div><span class="k">Billed to</span><span class="v"><%= resident.firstName %> <%= resident.lastName %></span></div>
+    <div><span class="k">Flat</span><span class="v"><%= resident.flatNumber %></span></div>
+    <div><span class="k">Period</span><span class="v"><%= monthName %>, <%= year %></span></div>
+    <div><span class="k">Date</span><span class="v"><%= date %></span></div>
+  </div>
+  <div class="table-wrap" style="border:none; border-radius:0;">
+    <table class="table">
+      <thead><tr><th>Particulars</th><th class="num">Amount (₹)</th></tr></thead>
+      <tbody>
+        <tr><td>Society charges</td><td class="num"><%= society.maintenanceBill.societyCharges %></td></tr>
+        <tr><td>Repairs and maintenance</td><td class="num"><%= society.maintenanceBill.repairsAndMaintenance %></td></tr>
+        <tr><td>Sinking fund</td><td class="num"><%= society.maintenanceBill.sinkingFund %></td></tr>
+        <tr><td>Water charges</td><td class="num"><%= society.maintenanceBill.waterCharges %></td></tr>
+        <tr><td>Insurance charges</td><td class="num"><%= society.maintenanceBill.insuranceCharges %></td></tr>
+        <tr><td>Parking charges</td><td class="num"><%= society.maintenanceBill.parkingCharges %></td></tr>
+        <% if (creditBalance > 0) { %><tr><td>Credit balance</td><td class="num" style="color:var(--success);">− <%= creditBalance %></td></tr><% } %>
+        <% if (pendingDue > 0) { %><tr><td>Previous outstanding</td><td class="num" style="color:var(--danger);"><%= pendingDue %></td></tr><% } %>
+        <tr class="doc-total"><td>Total amount due</td><td class="num">₹<%= totalAmount %></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<% if (receipt.invoice) { %>
+  <% let [rm, rd, ry] = new Date(receipt.date).toLocaleDateString().split("/") %>
+  <% let receiptMonth = new Date(receipt.date).toLocaleString("default", { month: "long" }) %>
+  <div class="row-between no-print" style="margin-bottom:12px;">
+    <h3 class="section-title">Last payment receipt</h3>
+    <button id="download-receipt" class="btn btn-ghost btn-sm">Download receipt</button>
+  </div>
+  <div id="receipt" class="doc" style="margin-bottom:24px;">
+    <div class="doc-head">
+      <div class="org"><%= society.societyName %></div>
+      <div class="addr"><%= society.societyAddress.address %>, <%= society.societyAddress.city %>, <%= society.societyAddress.district %> - <%= society.societyAddress.postalCode %></div>
+    </div>
+    <div class="doc-meta">
+      <div><span class="k">Receipt</span><span class="v"><%= receipt.invoice %></span></div>
+      <div><span class="k">For</span><span class="v"><%= receiptMonth %>, <%= ry %></span></div>
+      <div><span class="k">Date</span><span class="v"><%= rd %>/<%= rm %>/<%= ry %></span></div>
+      <div><span class="k">Amount</span><span class="v">₹<%= receipt.amount %></span></div>
+    </div>
+    <div class="card-pad" style="font-size:14px;">
+      <p style="margin:0 0 8px;">Received with thanks from <b>Flat <%= resident.flatNumber %> — <%= resident.firstName %> <%= resident.lastName %></b>, the sum of rupees <span id="words" style="font-weight:600;"></span>.</p>
+      <p class="text-muted" style="margin:0;">Being amount received from member towards maintenance charges for the month of <%= receiptMonth %>, <%= ry %>.</p>
+      <input id="number" type="hidden" value="<%= receipt.amount %>">
+      <p class="caption" style="margin:16px 0 0;">For <%= society.societyName %> · Secretary/Treasurer</p>
+    </div>
+  </div>
+<% } %>
+
+<% if (resident.isAdmin) { %>
+  <div class="card no-print">
+    <div class="card-head"><h3>Dues by resident</h3></div>
+    <div class="table-wrap" style="border:none; border-radius:0;">
+      <table class="table">
+        <thead><tr><th>Resident</th><th>Flat</th><th>Status</th><th class="num">Due (₹)</th></tr></thead>
+        <tbody>
+          <% societyResidents.forEach((r) => { %>
+            <% function monthDiff(df, dt) { return dt.getMonth() - df.getMonth() + (12 * (dt.getFullYear() - df.getFullYear())); } %>
+            <% const dateToday = new Date(); let totalMonth = 0; let dateFrom = r.createdAt; %>
+            <% if (r.lastPayment.date) { dateFrom = r.lastPayment.date; totalMonth = monthDiff(dateFrom, dateToday); } else { totalMonth = monthDiff(dateFrom, dateToday) + 1; } %>
+            <% let credit = 0, due = 0; %>
+            <% if (totalMonth == 0) { credit = monthlyTotal; } else if (totalMonth > 1) { due = (totalMonth - 1) * monthlyTotal; } %>
+            <% const rTotal = monthlyTotal + due - credit; %>
+            <tr>
+              <td class="cell-strong"><%= r.firstName %> <%= r.lastName %></td>
+              <td class="mono"><%= r.flatNumber %></td>
+              <td>
+                <% if (rTotal <= 0) { %><span class="badge badge-success"><span class="dot"></span>Paid</span>
+                <% } else if (due > 0) { %><span class="badge badge-danger"><span class="dot"></span>Overdue</span>
+                <% } else { %><span class="badge badge-warning"><span class="dot"></span>Due</span><% } %>
+              </td>
+              <td class="num mono"><%= rTotal %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.js"></script>
+<script>
+  // Stripe checkout (publishable key - safe to expose)
   var stripe = Stripe("pk_test_51ISbSbKm0w4ydVKOdI0dJjnDP1wkND8lSBs02U2bXTT0QX3kRDmLzO38Q6I4SmlsFP3mAaXLAdaFKPhIz2o0axjk00FkI15wzR");
   var checkoutButton = document.getElementById("checkout-button");
+  if (checkoutButton) {
+    checkoutButton.addEventListener("click", function () {
+      fetch("/checkout-session", {
+        method: "POST",
+        headers: { "CSRF-Token": "<%= csrfToken %>" },
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (session) { return stripe.redirectToCheckout({ sessionId: session.id }); })
+        .then(function (result) { if (result && result.error) alert(result.error.message); })
+        .catch(function (error) { console.error("Error:", error); });
+    });
+  }
 
-  checkoutButton.addEventListener("click", function () {
-    fetch("/checkout-session", {
-      method: "POST",
-      headers: { "CSRF-Token": "<%= csrfToken %>" },
-    })
-      .then(function (response) {
-        return response.json();
-      })
-      .then(function (session) {
-        return stripe.redirectToCheckout({ sessionId: session.id });
-      })
-      .then(function (result) {
-        // If redirectToCheckout fails due to a browser or network
-        // error, you should display the localized error message to your
-        // customer using error.message.
-        if (result.error) {
-          alert(result.error.message);
-        }
-      })
-      .catch(function (error) {
-        console.error("Error:", error);
-      });
-  });
-</script>
+  // PDF downloads
+  function downloadPdf(elId, filename) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    html2pdf().from(el).set({
+      margin: .5,
+      filename: filename,
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    }).save();
+  }
+  var billBtn = document.getElementById("download-btn");
+  if (billBtn) billBtn.addEventListener("click", function () { downloadPdf("print-content", "bill.pdf"); });
+  var receiptBtn = document.getElementById("download-receipt");
+  if (receiptBtn) receiptBtn.addEventListener("click", function () { downloadPdf("receipt", "receipt.pdf"); });
 
-<script>
-  var a = ['','one ','two ','three ','four ', 'five ','six ','seven ','eight ','nine ','ten ','eleven ','twelve ','thirteen ','fourteen ','fifteen ','sixteen ','seventeen ','eighteen ','nineteen '];
-  var b = ['', '', 'twenty','thirty','forty','fifty', 'sixty','seventy','eighty','ninety'];
-  function inWords (num) {
+  // Amount in words for the receipt
+  (function () {
+    var numEl = document.getElementById('number');
+    var wordsEl = document.getElementById('words');
+    if (!numEl || !wordsEl) return;
+    var a = ['','one ','two ','three ','four ','five ','six ','seven ','eight ','nine ','ten ','eleven ','twelve ','thirteen ','fourteen ','fifteen ','sixteen ','seventeen ','eighteen ','nineteen '];
+    var b = ['', '', 'twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+    function inWords(num) {
       if ((num = num.toString()).length > 9) return 'overflow';
-      n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-      if (!n) return; var str = '';
+      var n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+      if (!n) return '';
+      var str = '';
       str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'crore ' : '';
       str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'lakh ' : '';
       str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'thousand ' : '';
       str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'hundred ' : '';
       str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) + 'only ' : '';
       return str;
-  }
-  document.getElementById('words').innerHTML = inWords(document.getElementById('number').value);
+    }
+    wordsEl.innerHTML = inWords(numEl.value);
+  })();
 </script>
 
-<%- include('partials/footer') %>
+<%- include('partials/appFoot') %>
