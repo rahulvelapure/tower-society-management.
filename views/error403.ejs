@@ -1,0 +1,21 @@
+<%- include('partials/appHead', { pageTitle: '403 - Access denied' }) %>
+<%- include('partials/appNav', { pageTitle: '403 - Access denied' }) %>
+
+<div class="error-container">
+  <div class="error-box">
+    <div class="error-code">403</div>
+    <div class="error-title">Access denied</div>
+    <p class="error-message">You don't have permission to access this resource. Contact your administrator if you believe this is an error.</p>
+    <a href="/home" class="btn btn-primary">Go to home</a>
+  </div>
+</div>
+
+<style>
+.error-container { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+.error-box { text-align: center; max-width: 400px; }
+.error-code { font-size: 72px; font-weight: bold; color: var(--primary); }
+.error-title { font-size: 24px; font-weight: 600; margin: 16px 0; }
+.error-message { color: var(--text-muted); margin-bottom: 24px; }
+</style>
+
+<%- include('partials/appFoot') %>

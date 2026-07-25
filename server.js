@@ -93,9 +93,17 @@ app.use(require('./routes/finance'));
 app.use(require('./routes/helpdesk'));
 app.use(require('./routes/contacts'));
 app.use(require('./routes/units'));
+app.use(require('./routes/diagnostics'));
 
-app.get("/health", (req, res) => {
-  res.status(200).send("Server is running");
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).render('error500');
+});
+
+// 404 handler - must be last
+app.use((req, res) => {
+  res.status(404).render('error404');
 });
 
 app.listen(

@@ -1,0 +1,21 @@
+<%- include('partials/appHead', { pageTitle: '500 - Server error' }) %>
+<%- include('partials/appNav', { pageTitle: '500 - Server error' }) %>
+
+<div class="error-container">
+  <div class="error-box">
+    <div class="error-code">500</div>
+    <div class="error-title">Something went wrong</div>
+    <p class="error-message">An unexpected error occurred. Our team has been notified. Please try again later.</p>
+    <a href="/home" class="btn btn-primary">Go to home</a>
+  </div>
+</div>
+
+<style>
+.error-container { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+.error-box { text-align: center; max-width: 400px; }
+.error-code { font-size: 72px; font-weight: bold; color: var(--primary); }
+.error-title { font-size: 24px; font-weight: 600; margin: 16px 0; }
+.error-message { color: var(--text-muted); margin-bottom: 24px; }
+</style>
+
+<%- include('partials/appFoot') %>

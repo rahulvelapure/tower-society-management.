@@ -35,7 +35,7 @@
   ];
   if (isSuper) {
     // System group visible to the superadmin only (server-enforced regardless)
-    adminGroups.splice(4, 0, { label: 'System', items: [ ['admins','Administrators','/admins'] ] });
+    adminGroups.splice(4, 0, { label: 'System', items: [ ['admins','Administrators','/admins'], ['config','Diagnostics','/system/diagnostics'] ] });
   }
   const residentGroups = [
     { label: null, items: [ ['dashboard','Home','/home'] ] },

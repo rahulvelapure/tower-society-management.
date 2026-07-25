@@ -1,0 +1,131 @@
+<%- include('partials/appHead', { pageTitle: 'System Diagnostics' }) %>
+<%- include('partials/appNav', { active: 'config', pageTitle: 'System Diagnostics' }) %>
+
+<div class="page-header">
+  <h1>System Diagnostics</h1>
+  <p class="text-muted">System health and configuration information</p>
+</div>
+
+<div class="grid cols-2 gap-4">
+  <!-- Build Information -->
+  <div class="card">
+    <div class="card-head"><h3>Build Information</h3></div>
+    <div class="card-pad stack">
+      <div class="diag-row">
+        <span class="diag-label">Application</span>
+        <span class="diag-value"><%= buildInfo.name %></span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Version</span>
+        <span class="diag-value mono"><%= buildInfo.version %></span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Environment</span>
+        <span class="diag-value">
+          <span class="badge <%= buildInfo.environment === 'production' ? 'badge-danger' : 'badge-info' %>">
+            <%= buildInfo.environment %>
+          </span>
+        </span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Node Version</span>
+        <span class="diag-value mono"><%= buildInfo.nodeVersion %></span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Platform</span>
+        <span class="diag-value"><%= buildInfo.platform %> (<%= buildInfo.arch %>)</span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Current Time</span>
+        <span class="diag-value mono"><%= new Date(buildInfo.timestamp).toLocaleString() %></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Information -->
+  <div class="card">
+    <div class="card-head"><h3>System Resource</h3></div>
+    <div class="card-pad stack">
+      <div class="diag-row">
+        <span class="diag-label">CPU Cores</span>
+        <span class="diag-value"><%= systemInfo.cpu.cores %></span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">CPU Model</span>
+        <span class="diag-value"><%= systemInfo.cpu.model %></span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Memory Used</span>
+        <span class="diag-value"><%= systemInfo.memory.used %> MB / <%= systemInfo.memory.total %> MB</span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Memory Free</span>
+        <span class="diag-value"><%= systemInfo.memory.free %> MB</span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Uptime</span>
+        <span class="diag-value mono"><%= systemInfo.uptime.formatted %> (<%= systemInfo.uptime.seconds %>s)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Status -->
+  <div class="card cols-full">
+    <div class="card-head"><h3>Service Status</h3></div>
+    <div class="card-pad">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Status</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Database</strong></td>
+            <td><span class="badge badge-success"><%= statusChecks.database.status %></span></td>
+            <td><%= statusChecks.database.type %></td>
+          </tr>
+          <tr>
+            <td><strong>Payment Gateway</strong></td>
+            <td>
+              <% if (statusChecks.payment.status === 'configured') { %>
+                <span class="badge <%= statusChecks.payment.mode === 'live' ? 'badge-danger' : 'badge-info' %>">
+                  <%= statusChecks.payment.mode %> mode
+                </span>
+              <% } else { %>
+                <span class="badge badge-warning"><%= statusChecks.payment.status %></span>
+              <% } %>
+            </td>
+            <td><%= statusChecks.payment.status === 'configured' ? 'Stripe ' + statusChecks.payment.mode + ' configured' : 'Not configured' %></td>
+          </tr>
+          <tr>
+            <td><strong>Email</strong></td>
+            <td>
+              <span class="badge <%= statusChecks.email.status === 'configured' ? 'badge-success' : 'badge-warning' %>">
+                <%= statusChecks.email.status %>
+              </span>
+            </td>
+            <td><%= statusChecks.email.status === 'configured' ? 'SMTP configured' : 'Emails logged to console' %></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+.diag-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.diag-row:last-child { border-bottom: none; }
+.diag-label { font-weight: 500; color: var(--text-secondary); }
+.diag-value { text-align: right; }
+.badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+.badge-success { background: #d4edda; color: #155724; }
+.badge-warning { background: #fff3cd; color: #856404; }
+.badge-info { background: #d1ecf1; color: #0c5460; }
+.badge-danger { background: #f8d7da; color: #721c24; }
+.cols-full { grid-column: 1 / -1; }
+</style>
+
+<%- include('partials/appFoot') %>
