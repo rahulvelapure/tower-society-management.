@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const user_collection = require("../models/userModel");
 const society_collection = require("../models/societyModel");
 const unit_collection = require("../models/unitModel");
@@ -104,6 +105,9 @@ router.post("/approveResident", ensureAdmin, (req, res) => {
 
     if (!['approved', 'declined'].includes(validate_state)) {
         return res.status(400).send("Invalid validation state");
+    }
+    if (!mongoose.isValidObjectId(user_id)) {
+        return res.status(400).send("Invalid user ID");
     }
 
     user_collection.User.updateOne(

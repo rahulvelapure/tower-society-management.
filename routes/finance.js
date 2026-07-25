@@ -7,6 +7,7 @@ const unit_collection = require('../models/unitModel');
 const money = require('../lib/money');
 const { financialYear } = require('../lib/counters');
 const { previewTotals, currentRate } = require('../lib/financeConfig');
+const billGen = require('../lib/billGeneration');
 const audit = require('../lib/audit');
 const { ensureAdmin, ensureSuperAdmin } = require('../middleware/auth');
 
@@ -444,6 +445,200 @@ router.post('/finance/periods/:id/delete', ensureSuperAdmin, async (req, res) =>
         });
 
         res.redirect('/finance/periods');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server error');
+    }
+});
+
+// ===========================================================================
+// PHASE 3A-3: BILL GENERATION WORKFLOW
+// ===========================================================================
+
+// Preview: show what bills WOULD be generated (ephemeral, never persisted)
+router.get('/finance/periods/:id/preview', ensureAdmin, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.redirect('/finance/periods');
+        const period = await BillingPeriod.findById(req.params.id);
+        if (!period) return res.status(404).send('Not found');
+
+        const preview = await billGen.previewBillGeneration(period.society, period._id);
+        const fy = financialYear(period.periodStart);
+
+        res.render('billingPeriodPreview', { period, fy, preview });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server error');
+    }
+});
+
+// Generate DRAFT bills for a period (idempotent via unique {unit, period} index)
+router.post('/finance/periods/:id/generate', ensureAdmin, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.redirect('/finance/periods');
+        const period = await BillingPeriod.findById(req.params.id);
+        if (!period) return res.status(404).send('Not found');
+        if (period.status !== 'DRAFT') {
+            return res.redirect(`/finance/periods/${period._id}?error=Period must be DRAFT to generate bills`);
+        }
+
+        const result = await billGen.generateDraftBills(period.society, period._id, req.user.id);
+
+        if (result.created > 0 || result.skipped > 0) {
+            await audit.record({
+                actor: req.user,
+                action: 'BILLS_DRAFT_GENERATED',
+                entityType: 'BillingPeriod',
+                entityId: period._id,
+                context: { created: result.created, skipped: result.skipped, errors: result.errors.length }
+            });
+        }
+
+        res.redirect(`/finance/periods/${period._id}/bills?generated=${result.created}`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send(`Generation failed: ${err.message}`);
+    }
+});
+
+// Review generated DRAFT bills for a period (admin/superadmin only)
+router.get('/finance/periods/:id/bills', ensureAdmin, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.redirect('/finance/periods');
+        const period = await BillingPeriod.findById(req.params.id);
+        if (!period) return res.status(404).send('Not found');
+
+        const bills = await Bill
+            .find({ period: period._id })
+            .populate('unit')
+            .sort({ 'unit.floor': 1, 'unit.flatNumber': 1 });
+
+        const fy = financialYear(period.periodStart);
+        const generated = req.query.generated ? parseInt(req.query.generated, 10) : 0;
+        const totalBilledPaise = bills.reduce((sum, b) => sum + b.totalPaise, 0);
+
+        res.render('billsReview', { period, bills, fy, totalBilledPaise, generated });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server error');
+    }
+});
+
+// Issue bills: transition DRAFT→ISSUED with bill numbers (SUPERADMIN ONLY)
+router.post('/finance/periods/:id/issue', ensureSuperAdmin, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.redirect('/finance/periods');
+        const period = await BillingPeriod.findById(req.params.id);
+        if (!period) return res.status(404).send('Not found');
+        if (period.status !== 'DRAFT') {
+            return res.redirect(`/finance/periods/${period._id}?error=Period must be DRAFT to issue bills`);
+        }
+
+        const draftCount = await Bill.countDocuments({ period: period._id, status: 'DRAFT' });
+        if (draftCount === 0) {
+            return res.redirect(`/finance/periods/${period._id}?error=No DRAFT bills to issue`);
+        }
+
+        const result = await billGen.issueBillsForPeriod(period.society, period._id, req.user.id);
+
+        await audit.record({
+            actor: req.user,
+            action: 'BILLS_ISSUED',
+            entityType: 'BillingPeriod',
+            entityId: period._id,
+            context: { billsIssued: result.issuedBills.length, totalBilledPaise: result.totalBilledPaise }
+        });
+
+        res.redirect(`/finance/periods/${period._id}?issued=${result.issued}`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send(`Issuance failed: ${err.message}`);
+    }
+});
+
+// ===========================================================================
+// BILLS REGISTER (admin/superadmin view of all bills)
+// ===========================================================================
+
+router.get('/finance/bills', ensureAdmin, async (req, res) => {
+    try {
+        const society = await getSociety(req);
+        if (!society) return res.status(500).send('Society not configured');
+
+        const filters = {};
+        if (req.query.status) {
+            if (['DRAFT', 'ISSUED', 'PARTIALLY_PAID', 'PAID', 'OVERDUE', 'VOID'].includes(req.query.status)) {
+                filters.status = req.query.status;
+            }
+        }
+
+        const bills = await Bill
+            .find({ society: society._id, ...filters })
+            .populate('unit')
+            .populate('period')
+            .sort({ createdAt: -1 });
+
+        const summaryByStatus = {};
+        bills.forEach(b => {
+            summaryByStatus[b.status] = (summaryByStatus[b.status] || 0) + 1;
+        });
+
+        res.render('billsRegister', { bills, summaryByStatus, selectedStatus: req.query.status || 'ISSUED' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server error');
+    }
+});
+
+// ===========================================================================
+// RESIDENT BILL VIEWS (authorization-enforced: can only see own unit's ISSUED bills)
+// ===========================================================================
+
+// Resident's own bill list (ISSUED bills only for their unit)
+router.get('/bill', async (req, res) => {
+    try {
+        if (!req.user) return res.redirect('/login');
+        if (!req.user.unit) {
+            return res.render('residentHome', {
+                message: 'Your unit has not been assigned yet. Please contact administration.'
+            });
+        }
+
+        const bills = await Bill
+            .find({ unit: req.user.unit, status: { $in: ['ISSUED', 'PARTIALLY_PAID', 'PAID', 'OVERDUE'] } })
+            .populate('period')
+            .sort({ issueDate: -1 });
+
+        res.render('residentBills', { bills });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server error');
+    }
+});
+
+// Resident view a specific bill detail (authorization-enforced)
+router.get('/bill/:id', async (req, res) => {
+    try {
+        if (!req.user) return res.redirect('/login');
+        if (!req.user.unit) return res.status(403).send('Unit not assigned');
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).send('Not found');
+
+        const bill = await Bill
+            .findById(req.params.id)
+            .populate('unit')
+            .populate('period');
+
+        if (!bill) return res.status(404).send('Bill not found');
+
+        // CRITICAL: Enforce authorization - resident can only see their own unit's ISSUED bills
+        if (String(bill.unit._id) !== String(req.user.unit)) {
+            return res.status(403).send('You do not have access to this bill');
+        }
+        if (bill.status === 'DRAFT') {
+            return res.status(403).send('This bill is not yet issued');
+        }
+
+        res.render('residentBillDetail', { bill });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server error');

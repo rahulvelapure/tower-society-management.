@@ -1,0 +1,112 @@
+<%- include('partials/appHead', { pageTitle: 'Bills Register' }) %>
+<%- include('partials/appNav', { active: 'bills', pageTitle: 'Bills Register' }) %>
+
+<%
+  function formatAmount(paise) {
+    const r = paise / 100;
+    if (paise % 100 === 0) {
+      return '₹' + r.toLocaleString('en-IN');
+    } else {
+      return '₹' + (r).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  }
+
+  function statusBadge(status) {
+    if (status === 'DRAFT') return '<span class="badge badge-muted">Draft</span>';
+    if (status === 'ISSUED') return '<span class="badge badge-warning">Issued</span>';
+    if (status === 'PARTIALLY_PAID') return '<span class="badge badge-info">Partial</span>';
+    if (status === 'PAID') return '<span class="badge badge-success">Paid</span>';
+    if (status === 'OVERDUE') return '<span class="badge badge-danger">Overdue</span>';
+    if (status === 'VOID') return '<span class="badge badge-muted">Void</span>';
+    return '<span class="badge badge-muted">' + status + '</span>';
+  }
+%>
+
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Finance</div>
+    <h1 class="page-title" style="margin-top:4px;">Bills Register</h1>
+    <div class="sub"><%= bills.length %> bill(s)</div>
+  </div>
+  <a href="/finance" class="btn btn-ghost">Back to finance</a>
+</div>
+
+<div class="grid cols-2" style="margin-bottom:24px;">
+  <div class="card card-pad">
+    <div class="eyebrow">Filter by status</div>
+    <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+      <a href="/finance/bills" class="btn btn-sm <%= selectedStatus === 'ISSUED' ? 'btn-primary' : 'btn-ghost' %>">
+        Issued <% if (summaryByStatus['ISSUED']) { %><span class="badge"><%=summaryByStatus['ISSUED']%></span><% } %>
+      </a>
+      <a href="/finance/bills?status=DRAFT" class="btn btn-sm <%= selectedStatus === 'DRAFT' ? 'btn-primary' : 'btn-ghost' %>">
+        Draft <% if (summaryByStatus['DRAFT']) { %><span class="badge"><%=summaryByStatus['DRAFT']%></span><% } %>
+      </a>
+      <a href="/finance/bills?status=PAID" class="btn btn-sm <%= selectedStatus === 'PAID' ? 'btn-primary' : 'btn-ghost' %>">
+        Paid <% if (summaryByStatus['PAID']) { %><span class="badge"><%=summaryByStatus['PAID']%></span><% } %>
+      </a>
+      <a href="/finance/bills?status=OVERDUE" class="btn btn-sm <%= selectedStatus === 'OVERDUE' ? 'btn-primary' : 'btn-ghost' %>">
+        Overdue <% if (summaryByStatus['OVERDUE']) { %><span class="badge"><%=summaryByStatus['OVERDUE']%></span><% } %>
+      </a>
+    </div>
+  </div>
+
+  <div class="card card-pad">
+    <div class="eyebrow">All statuses</div>
+    <dl class="def-list" style="margin-top:14px; font-size:13px;">
+      <% Object.keys(summaryByStatus).sort().forEach(status => { %>
+        <dt><%= status %></dt>
+        <dd><%= summaryByStatus[status] %></dd>
+      <% }) %>
+    </dl>
+  </div>
+</div>
+
+<% if (bills.length === 0) { %>
+  <div class="card card-pad">
+    <p class="text-muted">No bills in this view.</p>
+  </div>
+<% } else { %>
+  <div class="card">
+    <div class="table-wrap" style="max-height:800px; overflow-y:auto;">
+      <table class="table table-compact">
+        <thead>
+          <tr>
+            <th>Flat</th>
+            <th>Period</th>
+            <th>Bill #</th>
+            <th class="num">Amount</th>
+            <th class="num">Paid</th>
+            <th class="num">Due</th>
+            <th class="num">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% bills.forEach(bill => { %>
+            <tr>
+              <td class="cell-strong">
+                <%= bill.unit ? bill.unit.flatNumber : '?' %>
+                <% if (bill.unit) { %><span class="caption">Floor <%= bill.unit.floor %></span><% } %>
+              </td>
+              <td>
+                <% if (bill.period) { %>
+                  <a href="/finance/periods/<%= bill.period._id %>" class="link"><%= bill.period.name %></a>
+                <% } else { %>
+                  —
+                <% } %>
+              </td>
+              <td class="mono">
+                <% if (bill.billNumber) { %><%= bill.billNumber %><% } else { %>—<% } %>
+              </td>
+              <td class="num mono"><%= formatAmount(bill.totalPaise) %></td>
+              <td class="num mono"><%= formatAmount(bill.paidPaise) %></td>
+              <td class="num mono"><%= formatAmount(bill.totalPaise - bill.paidPaise) %></td>
+              <td class="num"><%- statusBadge(bill.status) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+
+<%- include('partials/appFoot') %>

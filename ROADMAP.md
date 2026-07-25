@@ -8,15 +8,30 @@ otherwise.
 
 See `PHASE_3_BILLING_ARCHITECTURE.md` for the full design.
 
+### Phase 3A: Bill Generation & Collections (Resident Money In)
 - ✅ 3A-1 — Roles (superadmin/admin/member), financial foundation models, Stripe hardening + signed webhook (`PHASE_3A1_IMPLEMENTATION.md`)
 - ✅ 3A-2 — Billing Configuration + Charge Components + Billing Periods (`PHASE_3A2_IMPLEMENTATION.md`)
-- ⬜ 3A-3 — Bill preview → generate → review → issue
-- ⬜ 3A-4 — Flat Ledger + resident bill history
-- ⬜ 3A-5 — Manual/offline payments + allocation + adjustments
-- ⬜ 3A-6 — Webhook becomes fully authoritative; `/success` fully presentational
-- ⬜ 3A-7 — Receipts
-- ⬜ 3A-8 — Finance dashboard / reporting
-- ⬜ 3A-9 — Legacy cutover (opening balances, `lastPayment` retirement)
+- ✅ 3A-3 — Bill preview → generate (idempotent) → review → superadmin issue; resident bill views; privacy/security architecture (`PHASE_3A3_IMPLEMENTATION.md`)
+- ⬜ 3A-4 — Flat Ledger (derived, never stored) + Resident Bill History + Flat 360 financial tab
+- ⬜ 3A-5 — Manual/offline payments + allocation engine + partials/advances + adjustments
+- ⬜ 3A-6 — Stripe Webhook becomes fully authoritative; `/success` fully presentational; webhook allocation
+- ⬜ 3A-7 — Receipts (numbering via Counter, snapshot, register)
+- ⬜ 3A-8 — Finance Dashboard (KPIs: billed, collected, outstanding) + Bill/Collection/Receipt registers
+- ⬜ 3A-9 — Legacy Cutover (dry-run → open
+
+ing balances → switch to new system → retire `lastPayment`)
+
+### Phase 3B: Expenditure Management (Society Money Out) — DESIGN COMPLETE
+
+See `PHASE_3_FINANCE_EXPANSION_ARCHITECTURE.md` for the full design. **NOT IMPLEMENTED.**
+
+- ⬜ 3B-1 — Expense Model + Approval Workflow (DRAFT → SUBMITTED → APPROVED/REJECTED → PAID)
+- ⬜ 3B-2 — Vendor Master (contacts, multiple contact persons) + AMC/Contracts + Service History
+- ⬜ 3B-3 — Bank/Cash Account tracking + Account transactions
+- ⬜ 3B-4 — Payment Vouchers (linked to Expenses, bank account, vendor)
+- ⬜ 3B-5 — Document Repository (private object storage, visibility levels, download authorization)
+- ⬜ 3B-6 — AMC Renewal Reminders (scheduled jobs, configurable advance warnings)
+- ⬜ 3B-7 — Expenditure Dashboard (total approved, paid, outstanding payables)
 
 ## Confirmed next major module (not started): AMC / Vendor / Document Management
 

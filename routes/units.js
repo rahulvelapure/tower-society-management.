@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const unit_collection = require("../models/unitModel");
 const society_collection = require("../models/societyModel");
 const user_collection = require("../models/userModel");
@@ -211,6 +212,7 @@ router.post("/units/initialize", ensureAdmin, async (req, res) => {
 // financial position, complaints. All values computed from real records.
 router.get("/units/:id", ensureAdmin, async (req, res) => {
     try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).send("Invalid unit ID");
         const unit = await unit_collection.Unit.findById(req.params.id);
         if (!unit) return res.status(404).send("Not found");
 
@@ -242,6 +244,7 @@ router.get("/units/:id", ensureAdmin, async (req, res) => {
 
 router.get("/units/:id/edit", ensureAdmin, async (req, res) => {
     try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).send("Invalid unit ID");
         const unit = await unit_collection.Unit.findById(req.params.id);
         if (!unit) return res.status(404).send("Not found");
         res.render("unitForm", { unit, error: null });
@@ -253,6 +256,7 @@ router.get("/units/:id/edit", ensureAdmin, async (req, res) => {
 
 router.post("/units/:id", ensureAdmin, async (req, res) => {
     try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).send("Invalid unit ID");
         const societyId = await resolveSocietyId(req);
         const [ownerUserId, tenantUserId] = await Promise.all([
             findUserIdByEmail(societyId, req.body.ownerEmail),

@@ -1,0 +1,134 @@
+<%- include('partials/appHead', { pageTitle: 'Bill ' + (bill.billNumber || 'Draft') }) %>
+<%- include('partials/appNav', { active: 'bill', pageTitle: 'Bill Details' }) %>
+
+<%
+  function formatAmount(paise) {
+    const r = paise / 100;
+    if (paise % 100 === 0) {
+      return '₹' + r.toLocaleString('en-IN');
+    } else {
+      return '₹' + (r).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  }
+
+  const outstandingPaise = bill.totalPaise - bill.paidPaise;
+%>
+
+<div class="page-header">
+  <div>
+    <div class="eyebrow">Bill <%= bill.period ? bill.period.name : '' %></div>
+    <h1 class="page-title" style="margin-top:4px;">
+      <% if (bill.billNumber) { %><%= bill.billNumber %><% } else { %>Draft Bill<% } %>
+    </h1>
+    <div class="sub">
+      <% if (bill.issueDate) { %>
+        Issued <%= new Date(bill.issueDate).toLocaleDateString() %>
+      <% } %>
+    </div>
+  </div>
+  <a href="/bill" class="btn btn-ghost">Back to bills</a>
+</div>
+
+<div class="grid cols-3">
+  <div class="card card-pad">
+    <div class="eyebrow">Amount due</div>
+    <div class="kpi-value mono" style="margin-top:14px; font-size:20px;">
+      <% if (outstandingPaise > 0) { %>
+        <span style="color:#d9534f;"><%= formatAmount(outstandingPaise) %></span>
+      <% } else { %>
+        <span style="color:#5cb85c;">₹0</span>
+      <% } %>
+    </div>
+    <p class="caption">
+      <% if (outstandingPaise > 0) { %>
+        Unpaid
+      <% } else { %>
+        Fully paid
+      <% } %>
+    </p>
+  </div>
+
+  <div class="card card-pad">
+    <div class="eyebrow">Total amount</div>
+    <div class="kpi-value mono" style="margin-top:14px; font-size:20px;"><%= formatAmount(bill.totalPaise) %></div>
+    <p class="caption">Bill total</p>
+  </div>
+
+  <div class="card card-pad">
+    <div class="eyebrow">Amount paid</div>
+    <div class="kpi-value mono" style="margin-top:14px; font-size:20px;"><%= formatAmount(bill.paidPaise) %></div>
+    <p class="caption">Received</p>
+  </div>
+</div>
+
+<div class="grid cols-2 mt-6">
+  <div class="card card-pad">
+    <div class="eyebrow">Bill details</div>
+    <dl class="def-list" style="margin-top:14px;">
+      <dt>Bill number</dt>
+      <dd><%= bill.billNumber || 'Draft' %></dd>
+      <dt>Period</dt>
+      <dd><% if (bill.period) { %><%= bill.period.name %><% } %></dd>
+      <dt>Issue date</dt>
+      <dd><%= bill.issueDate ? new Date(bill.issueDate).toLocaleDateString() : '—' %></dd>
+      <dt>Due date</dt>
+      <dd><%= bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : '—' %></dd>
+      <dt>Status</dt>
+      <dd>
+        <% if (bill.status === 'ISSUED') { %>
+          <span class="badge badge-warning">Due</span>
+        <% } else if (bill.status === 'PARTIALLY_PAID') { %>
+          <span class="badge badge-info">Partial payment</span>
+        <% } else if (bill.status === 'PAID') { %>
+          <span class="badge badge-success">Paid</span>
+        <% } else if (bill.status === 'OVERDUE') { %>
+          <span class="badge badge-danger">Overdue</span>
+        <% } %>
+      </dd>
+    </dl>
+  </div>
+
+  <div class="card card-pad">
+    <div class="eyebrow">Payment</div>
+    <% if (outstandingPaise > 0) { %>
+      <p class="text-muted" style="margin-top:10px; font-size:14px;">Pay your outstanding amount.</p>
+      <a href="/checkout-session" class="btn btn-success btn-block" style="margin-top:14px;">Pay <%= formatAmount(outstandingPaise) %></a>
+      <p class="caption" style="margin-top:8px;">Online payment via credit/debit card or other methods</p>
+    <% } else { %>
+      <p class="text-success" style="margin-top:10px; font-size:14px;">✓ This bill is fully paid. Thank you!</p>
+    <% } %>
+  </div>
+</div>
+
+<div class="card mt-6">
+  <div class="card-head"><h3>Charges</h3><span class="caption"><%= bill.lineItems.length %> line item(s)</span></div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% bill.lineItems.forEach(item => { %>
+          <tr>
+            <td class="cell-strong">
+              <%= item.label %>
+              <% if (item.code) { %><span class="caption">(<%= item.code %>)</span><% } %>
+            </td>
+            <td class="num mono"><%= formatAmount(item.amountPaise) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+      <tfoot>
+        <tr style="border-top: 2px solid var(--border);">
+          <td style="padding:12px 14px; font-weight:600;">Total</td>
+          <td class="num mono" style="padding:12px 14px; font-weight:600;"><%= formatAmount(bill.totalPaise) %></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<%- include('partials/appFoot') %>

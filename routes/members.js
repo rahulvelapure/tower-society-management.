@@ -213,6 +213,7 @@ router.post("/members", ensureAdmin, async (req, res) => {
 // GET /members/:id/edit
 router.get("/members/:id/edit", ensureAdmin, async (req, res) => {
     try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.redirect("/members");
         const society = await getSociety(req);
         const member = await user_collection.User.findById(req.params.id);
         if (!member) return res.status(404).send("Not found");
@@ -234,6 +235,7 @@ router.post("/members/:id", ensureAdmin, async (req, res) => {
     });
 
     try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.redirect("/members");
         const society = await getSociety(req);
         if (!society) return res.status(404).send("Society not configured");
         member = await user_collection.User.findById(req.params.id);
@@ -281,6 +283,7 @@ router.post("/members/:id", ensureAdmin, async (req, res) => {
 // POST /members/:id/status - activate / deactivate
 router.post("/members/:id/status", ensureAdmin, async (req, res) => {
     try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.redirect("/members");
         const member = await user_collection.User.findById(req.params.id);
         if (!member) return res.status(404).send("Not found");
         // Guard: an admin can't lock themselves out.
@@ -307,6 +310,7 @@ router.post("/members/:id/status", ensureAdmin, async (req, res) => {
 // POST /members/:id/resend - regenerate an activation link for an invited member
 router.post("/members/:id/resend", ensureAdmin, async (req, res) => {
     try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.redirect("/members");
         const society = await getSociety(req);
         const member = await user_collection.User.findById(req.params.id);
         if (!member) return res.status(404).send("Not found");

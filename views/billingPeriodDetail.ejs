@@ -58,11 +58,20 @@
 
   <div class="card card-pad">
     <div class="eyebrow">Generation</div>
-    <p class="text-muted" style="margin-top:10px; font-size:14px;">
-      Bill preview, generation, review and issuing arrive in Phase 3A-3, after this configuration is validated.
-    </p>
-    <button class="btn btn-ghost btn-block" disabled title="Available in Phase 3A-3" style="margin-top:8px;">Generate Bills (Phase 3A-3)</button>
-    <div class="caption" style="margin-top:8px;"><%= billCount %> bill(s) exist for this period.</div>
+    <% if (period.status === 'DRAFT') { %>
+      <p class="text-muted" style="margin-top:10px; font-size:14px;">
+        Generate bills for all <%= 112 %> residential flats based on current charge configuration.
+      </p>
+      <a href="/finance/periods/<%= period._id %>/preview" class="btn btn-ghost btn-block" style="margin-top:8px;">Preview bills</a>
+      <div class="caption" style="margin-top:8px;"><%= billCount %> bill(s) currently generated.</div>
+    <% } else { %>
+      <p class="text-muted" style="margin-top:10px; font-size:14px;">
+        This period is <%= period.status.toLowerCase() %>.
+      </p>
+      <% if (billCount > 0) { %>
+        <a href="/finance/periods/<%= period._id %>/bills" class="btn btn-ghost btn-block" style="margin-top:8px;">Review bills (<%= billCount %>)</a>
+      <% } %>
+    <% } %>
   </div>
 </div>
 
