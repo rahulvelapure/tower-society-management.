@@ -1,9 +1,9 @@
-<%- include('partials/appHead', { pageTitle: unit ? 'Edit unit' : 'Add unit' }) %>
-<%- include('partials/appNav', { active: 'flats', pageTitle: unit ? 'Edit Unit' : 'Add Unit' }) %>
+<%- include('partials/appHead', { pageTitle: unit ? 'Edit flat' : 'Add flat' }) %>
+<%- include('partials/appNav', { active: 'flats', pageTitle: unit ? 'Edit flat' : 'Add flat' }) %>
 
 <div class="page-header">
   <div>
-    <h1 class="page-title"><%= unit ? 'Edit Flat ' + unit.flatNumber : 'Add unit' %></h1>
+    <h1 class="page-title"><%= unit ? 'Edit flat ' + unit.flatNumber : 'Add flat' %></h1>
     <div class="sub">Residential floors 1–28 only. Floors 29–30 are amenities.</div>
   </div>
   <a href="/units" class="btn btn-ghost">Back to flats</a>
@@ -49,16 +49,34 @@
 
     <div class="fieldset-title">Owner details</div>
     <div class="grid" style="grid-template-columns:1fr 1fr 1fr;">
-      <div class="form-field"><input class="input" name="ownerName" placeholder="Name" value="<%= unit && unit.owner ? unit.owner.name || '' : '' %>"></div>
-      <div class="form-field"><input class="input" name="ownerPhone" type="tel" placeholder="Phone" value="<%= unit && unit.owner ? unit.owner.phone || '' : '' %>"></div>
-      <div class="form-field"><input class="input" name="ownerEmail" type="email" placeholder="Email" value="<%= unit && unit.owner ? unit.owner.email || '' : '' %>"></div>
+      <div class="form-field">
+        <label class="label">Name</label>
+        <input class="input" name="ownerName" placeholder="Owner name" value="<%= unit && unit.owner ? unit.owner.name || '' : '' %>">
+      </div>
+      <div class="form-field">
+        <label class="label">Phone</label>
+        <input class="input" name="ownerPhone" type="tel" placeholder="Phone number" value="<%= unit && unit.owner ? unit.owner.phone || '' : '' %>">
+      </div>
+      <div class="form-field">
+        <label class="label">Email</label>
+        <input class="input" name="ownerEmail" type="email" placeholder="Email address" value="<%= unit && unit.owner ? unit.owner.email || '' : '' %>">
+      </div>
     </div>
 
     <div class="fieldset-title">Tenant details (if applicable)</div>
     <div class="grid" style="grid-template-columns:1fr 1fr 1fr;">
-      <div class="form-field"><input class="input" name="tenantName" placeholder="Name" value="<%= unit && unit.tenant ? unit.tenant.name || '' : '' %>"></div>
-      <div class="form-field"><input class="input" name="tenantPhone" type="tel" placeholder="Phone" value="<%= unit && unit.tenant ? unit.tenant.phone || '' : '' %>"></div>
-      <div class="form-field"><input class="input" name="tenantEmail" type="email" placeholder="Email" value="<%= unit && unit.tenant ? unit.tenant.email || '' : '' %>"></div>
+      <div class="form-field">
+        <label class="label">Name</label>
+        <input class="input" name="tenantName" placeholder="Tenant name" value="<%= unit && unit.tenant ? unit.tenant.name || '' : '' %>">
+      </div>
+      <div class="form-field">
+        <label class="label">Phone</label>
+        <input class="input" name="tenantPhone" type="tel" placeholder="Phone number" value="<%= unit && unit.tenant ? unit.tenant.phone || '' : '' %>">
+      </div>
+      <div class="form-field">
+        <label class="label">Email</label>
+        <input class="input" name="tenantEmail" type="email" placeholder="Email address" value="<%= unit && unit.tenant ? unit.tenant.email || '' : '' %>">
+      </div>
     </div>
     <div class="grid" style="grid-template-columns:1fr 1fr;">
       <div class="form-field">
@@ -84,7 +102,7 @@
     </div>
 
     <div class="flex gap-3 mt-4">
-      <button type="submit" class="btn btn-primary"><%= unit ? 'Save changes' : 'Create unit' %></button>
+      <button type="submit" class="btn btn-primary"><%= unit ? 'Save changes' : 'Create flat' %></button>
       <a href="/units" class="btn btn-ghost">Cancel</a>
     </div>
   </form>
